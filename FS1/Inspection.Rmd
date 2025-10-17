@@ -1,4 +1,12 @@
-```{r}
+---
+title: "Bericht 1 Fallstudien"
+output: html_document
+date: "2025-10-17"
+---
+Die erhobenen Daten sind Erhebungen zu dem Thema Glücksempfinden in insgesamt 165 Ländern die über die Jahre 2005 bis 2018 erhoben wurden. Es gibt 24 Variablen die für ein Land in einem Jahr jeweils erhoben wurden. 
+In dem vorliegenden Datensatz liegen insgesamt 1784 Beobachtungen vor.
+
+```{r, results='hold'}
 library("dplyr")
 library("ggplot2")
 library("corrplot")
@@ -10,11 +18,20 @@ df <- read.csv2(
   check.names = FALSE       
 )
 
+length(unique(df$Country_name))
+
 sum(is.na(df))
+(colSums(is.na(df)))
+
+data.frame(
+  Spalte = names(df),
+  Anzahl_NA = colSums(is.na(df))
+)
 
 ```
+Um zu ermitteln welche Länder den höchsten Zufriedenheitswert haben wird der jeweilige Durchschnitt über die in den Daten vorhandenen Jahre beobachtete Zufriedenheit berechnet. Anschließend werden die Länder nach diesem Durchschnittswert sortiert. Woraus sich eine Liste ergibt welche Länder sich gut und nicht gut zum auswandern eignen.
 
-```{r}
+```{r, results='hold'}
 # Welche L¨ander haben den h¨ochsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
 # als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung
 # mit dem Gesamtscore?
@@ -42,12 +59,60 @@ ggplot(best_worst, aes(x = reorder(Country_name, Life_Ladder),
   geom_text(aes(label = round(Life_Ladder, 2)),                            
             vjust = -0.3, size = 3.5) +
   labs(x = "Countries",
-       y = "Life Ladder Score",
+       y = "Life Ladder Score [mean]",
        title = "Worst/Best five Countries in Happiness Score") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1))
 
+
+
+
+
+```
+
+In der Abbildung sind die fünf Länder mit dem durchschnittlich besten und schlechtesten Wert abgebildet. Die Länder welche den höchsten durchschnittlichen Wert haben und sich damit am besten zum auswandern eignen sind die Niederlande mit einem durchschnittlichen Wert von ungefähr 7.47, die Schweiz mit einem Durchschnitt von 7.53, Norwegen und Finnland mit einem Wert von je 7.55 und Dänemark mit dem höchsten durchschnittlichen Wert von 7.69. Zu den Ländern mit dem schlechtesten durchschnittlichen Wert zählen Süd Sudan, Togo, die Zentralafrikanische Republik, Burundi sowie Ruanda. 
+Diese Reihenfolge basiert auf dem arithmetischen Mittel, dieses hat einen Bruchpunkt von 1 und reagiert damit im allgemeinen sensibel auf Ausreißer. Deswegen wird zum einen der Median bestimmt um die Robustheit dieser Ergebnisse zu überprüfen. 
+
+
+```{r, results='hold'}
+med <- df %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), median, na.rm = TRUE))
+
+# Durchschnitt über die Jahre 
+
+med
+
+worst_med <- med[order(med$Life_Ladder),][1:5,]
+
+best_med <- med[order(med$Life_Ladder, decreasing = TRUE),][1:5,]
+
+best_worst_med <- rbind(best_med, worst_med)
+
+# Grafiken im Mittel
+ggplot(best_worst_med, aes(x = reorder(Country_name, Life_Ladder),
+                       y = Life_Ladder,
+                       fill = Life_Ladder)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
+  geom_text(aes(label = round(Life_Ladder, 2)),                            
+            vjust = -0.3, size = 3.5) +
+  labs(x = "Countries",
+       y = "Life Ladder Score [median]",
+       title = "Worst/Best five Countries in Happiness Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1))
+
+
+
+
+```
+Diese Abbildung bestätigt die Ergebnisse aus der Abbildung die auf den Werten basierend auf dem arithmetischen Mittel basierten. Die fünf Länder mit dem schlechtesten Wert (im Median) sind bis auf Burundi, stattdessen gehört Benin dazu identisch. 
+Bei den fünf Ländern mit dem besten Wert (im Median) gehört nun Island statt Finnland zu den fünf Ländern mit dem höchsten Wert. Dänemark ist auch wenn man den Median als Metrik verwendet den höchsten Wert und auch die Reihenfolge der übrigen Länder weist eine Ähnlichkeit zu der vorherigen Abbildung auf. 
+
+Außerdem werden die einzelnen Jahre für die Daten existieren in einem zeitlichen Verlauf dargestellt um die Streuung der Daten zu beurteilen, dafür werden die 10 Länder aus der Grafik mit dem arithmetischen Mittel verwendet.
+
+```{r, results='hold'}
 # Zeitlicher Verlauf
 
 time <- df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda", "Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]
@@ -60,21 +125,27 @@ time$Country_name <- factor(
 
 time$col <- ifelse(time$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),"Good_Score","Bad_Score")
 
-ggplot(time, aes(x = Year, y = Life_Ladder, group = Country_name, color = col))+geom_line()+ geom_point()+theme_minimal()+
+ggplot(data = time, aes(x = Year, y = Life_Ladder, group = Country_name, color = col))+geom_line()+ geom_point()+theme_minimal()+
   labs(x = "Time Span", y = "Life Ladder Score", title = "Chronological Sequence of Ladder Score")+
   # scale_x_continuous(breaks = sort(unique(time$Year)))+
   scale_color_manual(values = c("Good_Score" = "darkgreen", "Bad_Score" = "tomato"))+
   facet_wrap(~Country_name, scales = "fixed", ncol = 5)
-
-# Abweichungen innerhalb der guten Länder
-sd(df[df$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]$Life_Ladder)
-
-# Abweichung innerhalb der schlechten Länder
-sd(df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda"),]$Life_Ladder)
-
 ```
 
-```{r}
+In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt den schlechtesten Wert für Zufriedenheit haben eine größere Streuung besitzen als die Länder die einen guten Wert für Zufriedenheit haben. Dies gilt zum einen über die jeweiligen Zeitspannen für die Daten existieren, als auch innerhalb der Gruppen der Länder mit dem höchsten/ niedrigsten durchschnittlichen Wert.
+
+```{r, results='hold'}
+# Abweichungen innerhalb der guten Länder
+good_sd <- sd(df[df$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]$Life_Ladder)
+
+# Abweichung innerhalb der schlechten Länder
+bad_sd <- sd(df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda"),]$Life_Ladder)
+
+paste("Die Standardabweichung innerhalb der Länder mit dem schlechtesten Score beträgt:",round(bad_sd,3), "Die Standardabweichung innerhalb der Länder mit dem besten Score beträgt:", round(good_sd,3))
+```
+
+
+```{r, results='hold'}
 #### Kovarianzstruktur 
 
 cov(means[sapply(means, is.numeric)])
@@ -115,7 +186,7 @@ ggplot(cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = C
 
 ```
 
-```{r}
+```{r, results='hold'}
 #PCA für die Grafik
 prcomp(na.omit(num_cols), scale. = TRUE)
 #Sehr viele NA deswegen Spalten entfernen wo sehr viele NA sind 
