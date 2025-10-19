@@ -1,0 +1,520 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Bericht 1 Fallstudien},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Bericht 1 Fallstudien}
+\author{}
+\date{\vspace{-2.5em}2025-10-17}
+
+\begin{document}
+\maketitle
+
+Die erhobenen Daten sind Erhebungen zu dem Thema Glücksempfinden in
+insgesamt 165 Ländern die über die Jahre 2005 bis 2018 erhoben wurden.
+Es gibt 24 Variablen die für ein Land in einem Jahr jeweils erhoben
+wurden. In dem vorliegenden Datensatz liegen insgesamt 1784
+Beobachtungen vor.
+
+Um zu ermitteln welche Länder den höchsten Zufriedenheitswert haben wird
+der jeweilige Durchschnitt über die in den Daten vorhandenen Jahre
+beobachtete Zufriedenheit berechnet. Anschließend werden die Länder nach
+diesem Durchschnittswert sortiert. Woraus sich eine Liste ergibt welche
+Länder sich gut und nicht gut zum auswandern eignen.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Grafiken im Mittel}
+\FunctionTok{ggplot}\NormalTok{(best\_worst, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \FunctionTok{reorder}\NormalTok{(Country\_name, Life\_Ladder),}
+                       \AttributeTok{y =}\NormalTok{ Life\_Ladder,}
+                       \AttributeTok{fill =}\NormalTok{ Life\_Ladder)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}\AttributeTok{stat =} \StringTok{"identity"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_gradient}\NormalTok{(}\AttributeTok{low =} \StringTok{"tomato"}\NormalTok{, }\AttributeTok{high =} \StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{guide =} \StringTok{"none"}\NormalTok{) }\SpecialCharTok{+}  
+  \FunctionTok{geom\_text}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{label =} \FunctionTok{round}\NormalTok{(Life\_Ladder, }\DecValTok{2}\NormalTok{)),                            }
+            \AttributeTok{vjust =} \SpecialCharTok{{-}}\FloatTok{0.3}\NormalTok{, }\AttributeTok{size =} \FloatTok{3.5}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Countries"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Life Ladder Score [mean]"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Worst/Best five Countries in Happiness Score"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text.x =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{angle =} \DecValTok{45}\NormalTok{, }\AttributeTok{hjust =} \DecValTok{1}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{coord\_cartesian}\NormalTok{(}\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\FunctionTok{max}\NormalTok{(best\_worst}\SpecialCharTok{$}\NormalTok{Life\_Ladder)}\SpecialCharTok{*}\FloatTok{1.1}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+In der Abbildung sind die fünf Länder mit dem durchschnittlich besten
+und schlechtesten Wert abgebildet. Die Länder welche den höchsten
+durchschnittlichen Wert haben und sich damit am besten zum auswandern
+eignen sind die Niederlande mit einem durchschnittlichen Wert von
+ungefähr 7.47, die Schweiz mit einem Durchschnitt von 7.53, Norwegen und
+Finnland mit einem Wert von je 7.55 und Dänemark mit dem höchsten
+durchschnittlichen Wert von 7.69. Zu den Ländern mit dem schlechtesten
+durchschnittlichen Wert zählen Süd Sudan, Togo, die Zentralafrikanische
+Republik, Burundi sowie Ruanda. Diese Reihenfolge basiert auf dem
+arithmetischen Mittel, dieses hat einen Bruchpunkt von 1 und reagiert
+damit im allgemeinen sensibel auf Ausreißer. Deswegen wird zum einen der
+Median bestimmt um die Robustheit dieser Ergebnisse zu überprüfen.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggplot}\NormalTok{(best\_worst\_med, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \FunctionTok{reorder}\NormalTok{(Country\_name, Life\_Ladder),}
+                       \AttributeTok{y =}\NormalTok{ Life\_Ladder,}
+                       \AttributeTok{fill =}\NormalTok{ Life\_Ladder)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}\AttributeTok{stat =} \StringTok{"identity"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_gradient}\NormalTok{(}\AttributeTok{low =} \StringTok{"tomato"}\NormalTok{, }\AttributeTok{high =} \StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{guide =} \StringTok{"none"}\NormalTok{) }\SpecialCharTok{+}  
+  \FunctionTok{geom\_text}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{label =} \FunctionTok{round}\NormalTok{(Life\_Ladder, }\DecValTok{2}\NormalTok{)),                            }
+            \AttributeTok{vjust =} \SpecialCharTok{{-}}\FloatTok{0.3}\NormalTok{, }\AttributeTok{size =} \FloatTok{3.5}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Countries"}\NormalTok{,}
+       \AttributeTok{y =} \StringTok{"Life Ladder Score [median]"}\NormalTok{,}
+       \AttributeTok{title =} \StringTok{"Worst/Best five Countries in Happiness Score"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text.x =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{angle =} \DecValTok{45}\NormalTok{, }\AttributeTok{hjust =} \DecValTok{1}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{coord\_cartesian}\NormalTok{(}\AttributeTok{ylim =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\FunctionTok{max}\NormalTok{(best\_worst}\SpecialCharTok{$}\NormalTok{Life\_Ladder)}\SpecialCharTok{*}\FloatTok{1.1}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+Diese Abbildung bestätigt die Ergebnisse aus der Abbildung die auf den
+Werten basierend auf dem arithmetischen Mittel basierten. Die fünf
+Länder mit dem schlechtesten Wert (im Median) sind bis auf Burundi,
+stattdessen gehört Benin dazu identisch. Bei den fünf Ländern mit dem
+besten Wert (im Median) gehört nun Island statt Finnland zu den fünf
+Ländern mit dem höchsten Wert. Dänemark ist auch wenn man den Median als
+Metrik verwendet den höchsten Wert und auch die Reihenfolge der übrigen
+Länder weist eine Ähnlichkeit zu der vorherigen Abbildung auf.
+
+Außerdem werden die einzelnen Jahre für die Daten existieren in einem
+zeitlichen Verlauf dargestellt um die Streuung der Daten zu beurteilen,
+dafür werden die 10 Länder aus der Grafik mit dem arithmetischen Mittel
+verwendet.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggplot}\NormalTok{(}\AttributeTok{data =}\NormalTok{ time, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Year, }\AttributeTok{y =}\NormalTok{ Life\_Ladder, }\AttributeTok{group =}\NormalTok{ Country\_name, }\AttributeTok{color =}\NormalTok{ col))}\SpecialCharTok{+}\FunctionTok{geom\_line}\NormalTok{()}\SpecialCharTok{+} \FunctionTok{geom\_point}\NormalTok{()}\SpecialCharTok{+}\FunctionTok{theme\_minimal}\NormalTok{()}\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Time Span"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Life Ladder Score"}\NormalTok{, }\AttributeTok{title =} \StringTok{"Chronological Sequence of Ladder Score"}\NormalTok{)}\SpecialCharTok{+}
+  \CommentTok{\# scale\_x\_continuous(breaks = sort(unique(time$Year)))+}
+  \FunctionTok{scale\_color\_manual}\NormalTok{(}\AttributeTok{values =} \FunctionTok{c}\NormalTok{(}\StringTok{"Good\_Score"} \OtherTok{=} \StringTok{"darkgreen"}\NormalTok{, }\StringTok{"Bad\_Score"} \OtherTok{=} \StringTok{"tomato"}\NormalTok{))}\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{Country\_name, }\AttributeTok{scales =} \StringTok{"fixed"}\NormalTok{, }\AttributeTok{ncol =} \DecValTok{5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt
+den schlechtesten Wert für Zufriedenheit haben eine größere Streuung
+besitzen als die Länder die einen guten Wert für Zufriedenheit haben.
+Dies gilt zum einen über die jeweiligen Zeitspannen für die Daten
+existieren, als auch innerhalb der Gruppen der Länder mit dem
+höchsten/niedrigsten durchschnittlichen Wert.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Abweichungen innerhalb der guten Länder}
+\NormalTok{good\_sd }\OtherTok{\textless{}{-}} \FunctionTok{sd}\NormalTok{(df[df}\SpecialCharTok{$}\NormalTok{Country\_name }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"Netherlands"}\NormalTok{, }\StringTok{"Switzerland"}\NormalTok{, }\StringTok{"Norway"}\NormalTok{, }\StringTok{"Finland"}\NormalTok{, }\StringTok{"Denmark"}\NormalTok{),]}\SpecialCharTok{$}\NormalTok{Life\_Ladder)}
+
+\CommentTok{\# Abweichung innerhalb der schlechten Länder}
+\NormalTok{bad\_sd }\OtherTok{\textless{}{-}} \FunctionTok{sd}\NormalTok{(df[df}\SpecialCharTok{$}\NormalTok{Country\_name }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{"South Sudan"}\NormalTok{, }\StringTok{"Togo"}\NormalTok{, }\StringTok{"Central African Republic"}\NormalTok{, }\StringTok{"Burundi"}\NormalTok{, }\StringTok{"Rwanda"}\NormalTok{),]}\SpecialCharTok{$}\NormalTok{Life\_Ladder)}
+
+\FunctionTok{paste}\NormalTok{(}\StringTok{"Die Standardabweichung innerhalb der Länder mit dem schlechtesten Score beträgt:"}\NormalTok{,}\FunctionTok{round}\NormalTok{(bad\_sd,}\DecValTok{3}\NormalTok{), }\StringTok{"Die Standardabweichung innerhalb der Länder mit dem besten Score beträgt:"}\NormalTok{, }\FunctionTok{round}\NormalTok{(good\_sd,}\DecValTok{3}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Die Standardabweichung innerhalb der Länder mit dem schlechtesten Score beträgt: 0.485 Die Standardabweichung innerhalb der Länder mit dem besten Score beträgt: 0.156"
+\end{verbatim}
+
+Es soll der Zusammenhang zwischen der ``Hauptvariable'' Life Ladder und
+den restlichen erhobenen Variablen ermittelt werden. Um den Zusammenhang
+zwischen Variablen zu messen benötigt man ein geeignetes
+Zusammenhangsmaß.Ein solches Maß ist beispielsweise der Bravais Pearson
+Korrelationskoeffizient, welcher Werte innerhalb von {[}-1,1{]} annehmen
+kann, wobei ein Wert von -1 eine starke negative Korrelation ausdrückt,
+ein Wert von 1 eine starke positive Korrelation beschreibt und ein Wert
+von 0 unkorreliertheit zwischen zwei Variablen bedeutet.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Barplot}
+\FunctionTok{ggplot}\NormalTok{(cor\_df, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \FunctionTok{reorder}\NormalTok{(Variable, Correlation), }\AttributeTok{y =}\NormalTok{ Correlation, }\AttributeTok{fill =}\NormalTok{ Correlation)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}\AttributeTok{stat =} \StringTok{"identity"}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{coord\_flip}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_gradient2}\NormalTok{(}\AttributeTok{low =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{mid =} \StringTok{"white"}\NormalTok{, }\AttributeTok{high =} \StringTok{"red"}\NormalTok{, }\AttributeTok{midpoint =} \DecValTok{0}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Variable Correlation with Life Ladder Score"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Variable"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Correlation"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{10}\NormalTok{),}
+        \AttributeTok{plot.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{hjust =} \FloatTok{0.5}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-10-1.pdf}
+
+In dieser Abbildung sind die Korrelationen jeder Variable mit Life
+Ladder dargestellt. Die Korrelation von Life Ladder zu sich selber
+beträgt 1 und bezeichnet eine ``perfekte'' Korrelation und ist zu
+Anschauungszwecken ebenfalls im Plot enthalten. In der Statistik gibt es
+den Begriff der Multikollinearität. Wenn zwei Variablen durch einen
+gemeinsamen Effekt beeinflusst werden, dann werden sie obwohl sie eine
+unterschiedliche Bedeutung haben eine hohe Korrelation aufweisen. Da man
+dann unter Umständen diesen Effekt in mehreren Variablen merkt, ist es
+sinnvoll die Kovarianzstruktur genauer zu betrachten, um nur die
+Variablen zu beachten die einen hohen Beitrag zur Gesamtvarianz haben.
+
+Um den Einfluss von Spalten mit einem hohen Anteil fehlender Werte zu
+vermeiden, wurden nur jene Variablen beibehalten, für die mindestens 80
+\% der Werte vorhanden waren. Die Variablen wurden dabei standardisiert
+(z-Transformation), um unterschiedliche Skalierungen zu neutralisieren.
+Aus der Rotationsmatrix der PCA (\$rotation) wurde der Gesamtbeitrag
+jeder Variablen zu den ersten drei Hauptkomponenten berechnet. Dazu
+wurde für jede Variable die Summe der quadrierten Ladungen (loadings)
+über die ersten drei Komponenten gebildet. Dieses Maß beschreibt, in
+welchem Ausmaß eine Variable zur erklärten Varianz der wichtigsten
+Komponenten beiträgt. Auf dieser Grundlage wurden die zehn Variablen mit
+dem höchsten Gesamtbeitrag ausgewählt, da sie die größte strukturelle
+Bedeutung innerhalb der Daten aufweisen. Im Anschluss wurde für diese
+Variablen die Pearson-Korrelation mit der Zielvariablen Life Ladder
+berechnet, um zu untersuchen, welche dieser zentralen Variablen am
+stärksten mit dem subjektiven Wohlbefinden (Life Ladder) zusammenhängen.
+Die Hauptkomponentenanalyse wurde unabhängig von der Zielvariable Life
+Ladder durchgeführt und dient nicht zur Analyse der Korrelation, sondern
+als Maßnahme zur vorverarbeitung der Daten die die Dimension der Daten
+verringern soll.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggplot}\NormalTok{(cor\_df[cor\_df}\SpecialCharTok{$}\NormalTok{Variable }\SpecialCharTok{\%in\%}\NormalTok{ top15,], }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \FunctionTok{reorder}\NormalTok{(Variable, Correlation), }\AttributeTok{y =}\NormalTok{ Correlation, }\AttributeTok{fill =}\NormalTok{ Correlation)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}\AttributeTok{stat =} \StringTok{"identity"}\NormalTok{, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{coord\_flip}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_gradient2}\NormalTok{(}\AttributeTok{low =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{mid =} \StringTok{"white"}\NormalTok{, }\AttributeTok{high =} \StringTok{"red"}\NormalTok{, }\AttributeTok{midpoint =} \DecValTok{0}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Correlation mit Life\_Ladder [only 15 most important]"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Variable"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Correlation"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{axis.text =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size =} \DecValTok{10}\NormalTok{),}
+        \AttributeTok{plot.title =} \FunctionTok{element\_text}\NormalTok{(}\AttributeTok{hjust =} \FloatTok{0.5}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sum}\NormalTok{(var\_df[var\_df}\SpecialCharTok{$}\NormalTok{Spalte }\SpecialCharTok{\%in\%}\NormalTok{ top15,]}\SpecialCharTok{$}\NormalTok{Varianz\_erklärt)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.9375
+\end{verbatim}
+
+Die 15 in der Grafik dargestellten Variablen weisen den höchsten Beitrag
+zur Varianz auf. Insgesamt erklären machen diese 15 Spalten 93.75\% der
+gesamten Varianz aus. Die stärkste positive Korrelation liegt bei dem
+logarithmierten Pro-Kopf Bruttoninlandsprodukt und Life Ladder vor.
+
+Der Gini-Koeffizient ist ein Maß zur Beschreibung der Ungleichheit einer
+Verteilung. Er wird häufig verwendet, um die Verteilung von Einkommen
+oder Vermögen in einer Bevölkerung zu quantifizieren. Der Wert liegt
+zwischen 0 und 1: Ein Gini-Koeffizient von 0 bedeutet vollständige
+Gleichheit (alle besitzen gleich viel), während ein Wert von 1 maximale
+Ungleichheit beschreibt (eine Person besitzt alles, alle anderen
+nichts). In der folgenden Analyse wird der Gini Koeffizient für den Life
+Ladder Score, sowie für das Pro-Kopf Bruttoinlandsprodukt berechnet.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Gini Koeffizient }
+
+\CommentTok{\# last\_year \textless{}{-} df \%\textgreater{}\% group\_by("Country\_Name") \%\textgreater{}\% }
+
+
+\NormalTok{means}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 165 x 25
+##    Country_name Life_Ladder Log_GDP_per_capita Social_support
+##    <chr>              <dbl>              <dbl>          <dbl>
+##  1 Afghanistan         3.71               7.44          0.516
+##  2 Albania             4.99               9.26          0.720
+##  3 Algeria             5.48               9.51          0.804
+##  4 Angola              4.42               8.71          0.738
+##  5 Argentina           6.36               9.83          0.906
+##  6 Armenia             4.44               8.93          0.714
+##  7 Australia           7.30              10.7           0.949
+##  8 Austria             7.25              10.7           0.927
+##  9 Azerbaijan          4.92               9.63          0.762
+## 10 Bahrain             5.86              10.6           0.884
+## # i 155 more rows
+## # i 21 more variables: Healthy_life_expectancy_at_birth <dbl>,
+## #   Freedom_to_make_life_choices <dbl>, Generosity <dbl>,
+## #   Perceptions_of_corruption <dbl>, Positive_affect <dbl>,
+## #   Negative_affect <dbl>, Confidence_in_national_government <dbl>,
+## #   Democratic_Quality <dbl>, Delivery_Quality <dbl>,
+## #   `Standard_deviation_of_ladder_by_country-year` <dbl>, ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{means }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{Gini\_Score\_LGDP =} \FunctionTok{Gini}\NormalTok{(}\FunctionTok{exp}\NormalTok{(Log\_GDP\_per\_capita), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 1
+##   Gini_Score_LGDP
+##             <dbl>
+## 1           0.535
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{means }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{Gini\_Score\_Ladder =} \FunctionTok{Gini}\NormalTok{(Life\_Ladder, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 1
+##   Gini_Score_Ladder
+##               <dbl>
+## 1             0.113
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Unterschied zwischen der Verteilung von Life Ladder und von Log GDP per Capita}
+
+
+\FunctionTok{ggplot}\NormalTok{(means, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ (Log\_GDP\_per\_capita), }\AttributeTok{y =}\NormalTok{ Life\_Ladder)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{color =}\NormalTok{ Country\_name), }\AttributeTok{alpha =} \FloatTok{0.7}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method =} \StringTok{"lm"}\NormalTok{, }\AttributeTok{se =} \ConstantTok{FALSE}\NormalTok{, }\AttributeTok{color =} \StringTok{"black"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{theme\_minimal}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}
+    \AttributeTok{title =} \StringTok{"Zusammenhang zwischen Log GDP per Capita und Life Ladder"}\NormalTok{,}
+    \AttributeTok{x =} \StringTok{"Durchschnittliches Log GDP per Capita"}\NormalTok{,}
+    \AttributeTok{y =} \StringTok{"Durchschnittlicher Life Ladder Score"}\NormalTok{,}
+    \AttributeTok{color =} \StringTok{"Land"}
+\NormalTok{  ) }\SpecialCharTok{+} \FunctionTok{theme}\NormalTok{(}\AttributeTok{legend.position =} \StringTok{"none"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `geom_smooth()` using formula = 'y ~ x'
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 3 rows containing non-finite outside the scale range
+## (`stat_smooth()`).
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 3 rows containing missing values or values outside the scale range
+## (`geom_point()`).
+\end{verbatim}
+
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_sorted\_GDP }\OtherTok{\textless{}{-}}\NormalTok{ means[}\FunctionTok{order}\NormalTok{(means}\SpecialCharTok{$}\NormalTok{Log\_GDP\_per\_capita), ]}
+
+\NormalTok{df\_sorted\_GDP}\SpecialCharTok{$}\NormalTok{cum\_share }\OtherTok{\textless{}{-}} \FunctionTok{cumsum}\NormalTok{(}\FunctionTok{exp}\NormalTok{(df\_sorted\_GDP}\SpecialCharTok{$}\NormalTok{Log\_GDP\_per\_capita)) }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{(}\FunctionTok{exp}\NormalTok{(df\_sorted\_GDP}\SpecialCharTok{$}\NormalTok{Log\_GDP\_per\_capita), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+
+
+\FunctionTok{length}\NormalTok{(}\FunctionTok{na.omit}\NormalTok{(df\_sorted\_GDP[df\_sorted\_GDP}\SpecialCharTok{$}\NormalTok{cum\_share }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{,]}\SpecialCharTok{$}\NormalTok{Country\_name))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 28
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_sorted\_LL }\OtherTok{\textless{}{-}}\NormalTok{ means[}\FunctionTok{order}\NormalTok{(means}\SpecialCharTok{$}\NormalTok{Life\_Ladder), ]}
+
+\NormalTok{df\_sorted\_LL}\SpecialCharTok{$}\NormalTok{cum\_share }\OtherTok{\textless{}{-}} \FunctionTok{cumsum}\NormalTok{(df\_sorted\_LL}\SpecialCharTok{$}\NormalTok{Life\_Ladder) }\SpecialCharTok{/} \FunctionTok{sum}\NormalTok{(df\_sorted\_GDP}\SpecialCharTok{$}\NormalTok{Life\_Ladder, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+
+\FunctionTok{length}\NormalTok{(}\FunctionTok{na.omit}\NormalTok{(df\_sorted\_LL[df\_sorted\_LL}\SpecialCharTok{$}\NormalTok{cum\_share }\SpecialCharTok{\textgreater{}} \FloatTok{0.5}\NormalTok{,]}\SpecialCharTok{$}\NormalTok{Country\_name))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 70
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Lebenszufriedenheit ist nicht so ungleich verteilt wie das Pro Kopf Einkommen}
+\end{Highlighting}
+\end{Shaded}
+
+Bei der Betrachtung der beiden Gini Koeffizienten fällt auf das Pro-Kopf
+Bruttoinlandsprodukt stärker auf wenige Länder konzentriert ist als der
+Life Ladder Score.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(}\FunctionTok{lm}\NormalTok{(}\AttributeTok{data =}\NormalTok{ means,}\AttributeTok{formula =}\NormalTok{ Life\_Ladder }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Log\_GDP\_per\_capita }\SpecialCharTok{+}\NormalTok{ Social\_support }\SpecialCharTok{+}\NormalTok{ Democratic\_Quality))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = Life_Ladder ~ Log_GDP_per_capita + Social_support + 
+##     Democratic_Quality, data = means)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.79632 -0.32951 -0.00002  0.36076  1.29163 
+## 
+## Coefficients:
+##                    Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)        -0.79003    0.44021  -1.795  0.07463 .  
+## Log_GDP_per_capita  0.41814    0.05478   7.633 2.08e-12 ***
+## Social_support      2.94859    0.54230   5.437 2.03e-07 ***
+## Democratic_Quality  0.22597    0.06325   3.572  0.00047 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.5297 on 157 degrees of freedom
+##   (4 Beobachtungen als fehlend gelöscht)
+## Multiple R-squared:  0.7612, Adjusted R-squared:  0.7566 
+## F-statistic: 166.8 on 3 and 157 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(}\FunctionTok{lm}\NormalTok{(}\AttributeTok{data =}\NormalTok{ means, }\AttributeTok{formula =}\NormalTok{ Life\_Ladder }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Healthy\_life\_expectancy\_at\_birth))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = Life_Ladder ~ Healthy_life_expectancy_at_birth, 
+##     data = means)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.50561 -0.49057 -0.00576  0.52262  1.36856 
+## 
+## Coefficients:
+##                                   Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)                      -1.586377   0.427370  -3.712 0.000284 ***
+## Healthy_life_expectancy_at_birth  0.111652   0.006791  16.441  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6573 on 160 degrees of freedom
+##   (3 Beobachtungen als fehlend gelöscht)
+## Multiple R-squared:  0.6282, Adjusted R-squared:  0.6258 
+## F-statistic: 270.3 on 1 and 160 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\end{document}

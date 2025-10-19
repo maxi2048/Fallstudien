@@ -1,12 +1,13 @@
 ---
 title: "Bericht 1 Fallstudien"
-output: html_document
+output:
+  pdf_document: default
 date: "2025-10-17"
 ---
 Die erhobenen Daten sind Erhebungen zu dem Thema Glücksempfinden in insgesamt 165 Ländern die über die Jahre 2005 bis 2018 erhoben wurden. Es gibt 24 Variablen die für ein Land in einem Jahr jeweils erhoben wurden. 
 In dem vorliegenden Datensatz liegen insgesamt 1784 Beobachtungen vor.
 
-```{r, results='hold'}
+```{r, include=FALSE}
 library("dplyr")
 library("ggplot2")
 library("ineq")
@@ -32,7 +33,7 @@ data.frame(
 ```
 Um zu ermitteln welche Länder den höchsten Zufriedenheitswert haben wird der jeweilige Durchschnitt über die in den Daten vorhandenen Jahre beobachtete Zufriedenheit berechnet. Anschließend werden die Länder nach diesem Durchschnittswert sortiert. Woraus sich eine Liste ergibt welche Länder sich gut und nicht gut zum auswandern eignen.
 
-```{r, results='hold'}
+```{r, include=FALSE}
 # Welche L¨ander haben den h¨ochsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
 # als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung
 # mit dem Gesamtscore?
@@ -51,6 +52,11 @@ best <- means[order(means$Life_Ladder, decreasing = TRUE),][1:5,]
 
 best_worst <- rbind(best, worst)
 
+
+
+```
+
+```{r}
 # Grafiken im Mittel
 ggplot(best_worst, aes(x = reorder(Country_name, Life_Ladder),
                        y = Life_Ladder,
@@ -69,14 +75,15 @@ ggplot(best_worst, aes(x = reorder(Country_name, Life_Ladder),
 
 
 
-
 ```
+
+
 
 In der Abbildung sind die fünf Länder mit dem durchschnittlich besten und schlechtesten Wert abgebildet. Die Länder welche den höchsten durchschnittlichen Wert haben und sich damit am besten zum auswandern eignen sind die Niederlande mit einem durchschnittlichen Wert von ungefähr 7.47, die Schweiz mit einem Durchschnitt von 7.53, Norwegen und Finnland mit einem Wert von je 7.55 und Dänemark mit dem höchsten durchschnittlichen Wert von 7.69. Zu den Ländern mit dem schlechtesten durchschnittlichen Wert zählen Süd Sudan, Togo, die Zentralafrikanische Republik, Burundi sowie Ruanda. 
 Diese Reihenfolge basiert auf dem arithmetischen Mittel, dieses hat einen Bruchpunkt von 1 und reagiert damit im allgemeinen sensibel auf Ausreißer. Deswegen wird zum einen der Median bestimmt um die Robustheit dieser Ergebnisse zu überprüfen. 
 
 
-```{r, results='hold'}
+```{r, include=FALSE}
 med <- df %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), median, na.rm = TRUE))
 
 # Durchschnitt über die Jahre 
@@ -89,7 +96,11 @@ best_med <- med[order(med$Life_Ladder, decreasing = TRUE),][1:5,]
 
 best_worst_med <- rbind(best_med, worst_med)
 
-# Grafiken im Mittel
+# Grafiken im Median
+
+```
+
+```{r}
 ggplot(best_worst_med, aes(x = reorder(Country_name, Life_Ladder),
                        y = Life_Ladder,
                        fill = Life_Ladder)) +
@@ -104,16 +115,15 @@ ggplot(best_worst_med, aes(x = reorder(Country_name, Life_Ladder),
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1))
 
-
-
-
 ```
+
+
 Diese Abbildung bestätigt die Ergebnisse aus der Abbildung die auf den Werten basierend auf dem arithmetischen Mittel basierten. Die fünf Länder mit dem schlechtesten Wert (im Median) sind bis auf Burundi, stattdessen gehört Benin dazu identisch. 
 Bei den fünf Ländern mit dem besten Wert (im Median) gehört nun Island statt Finnland zu den fünf Ländern mit dem höchsten Wert. Dänemark ist auch wenn man den Median als Metrik verwendet den höchsten Wert und auch die Reihenfolge der übrigen Länder weist eine Ähnlichkeit zu der vorherigen Abbildung auf. 
 
 Außerdem werden die einzelnen Jahre für die Daten existieren in einem zeitlichen Verlauf dargestellt um die Streuung der Daten zu beurteilen, dafür werden die 10 Länder aus der Grafik mit dem arithmetischen Mittel verwendet.
 
-```{r, results='hold'}
+```{r, include=FALSE}
 # Zeitlicher Verlauf
 
 time <- df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda", "Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]
@@ -126,12 +136,17 @@ time$Country_name <- factor(
 
 time$col <- ifelse(time$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),"Good_Score","Bad_Score")
 
+
+```
+```{r}
 ggplot(data = time, aes(x = Year, y = Life_Ladder, group = Country_name, color = col))+geom_line()+ geom_point()+theme_minimal()+
   labs(x = "Time Span", y = "Life Ladder Score", title = "Chronological Sequence of Ladder Score")+
   # scale_x_continuous(breaks = sort(unique(time$Year)))+
   scale_color_manual(values = c("Good_Score" = "darkgreen", "Bad_Score" = "tomato"))+
   facet_wrap(~Country_name, scales = "fixed", ncol = 5)
 ```
+
+
 
 In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt den schlechtesten Wert für Zufriedenheit haben eine größere Streuung besitzen als die Länder die einen guten Wert für Zufriedenheit haben. Dies gilt zum einen über die jeweiligen Zeitspannen für die Daten existieren, als auch innerhalb der Gruppen der Länder mit dem höchsten/niedrigsten durchschnittlichen Wert.
 
@@ -147,7 +162,7 @@ paste("Die Standardabweichung innerhalb der Länder mit dem schlechtesten Score 
 
 Es soll der Zusammenhang zwischen der "Hauptvariable" Life Ladder und den restlichen erhobenen Variablen ermittelt werden. Um den Zusammenhang zwischen Variablen zu messen benötigt man ein geeignetes Zusammenhangsmaß.Ein solches Maß ist beispielsweise der Bravais Pearson Korrelationskoeffizient, welcher Werte innerhalb von [-1,1] annehmen kann, wobei ein Wert von -1 eine starke negative Korrelation ausdrückt, ein Wert von 1 eine starke positive Korrelation beschreibt und ein Wert von 0 unkorreliertheit zwischen zwei Variablen bedeutet. 
 
-```{r, results='hold'}
+```{r, include=FALSE}
 #### Kovarianzstruktur 
 
 cov(means[sapply(means, is.numeric)])
@@ -171,6 +186,11 @@ cor_df <- data.frame(
   Correlation = as.numeric(cov_df)
 )
 
+
+
+```
+
+```{r}
 # Barplot
 ggplot(cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation)) +
   geom_bar(stat = "identity", na.rm = TRUE) +
@@ -181,10 +201,16 @@ ggplot(cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = C
   theme_minimal() +
   theme(axis.text = element_text(size = 10),
         plot.title = element_text(hjust = 0.5))
-
 ```
 
-```{r, results='hold'}
+
+
+In dieser Abbildung sind die Korrelationen jeder Variable mit Life Ladder dargestellt. Die Korrelation von Life Ladder zu sich selber beträgt 1 und bezeichnet eine "perfekte" Korrelation und ist zu Anschauungszwecken ebenfalls im Plot enthalten. In der Statistik gibt es den Begriff der Multikollinearität. Wenn zwei Variablen durch einen gemeinsamen Effekt beeinflusst werden, dann werden sie obwohl sie eine unterschiedliche Bedeutung haben eine hohe Korrelation aufweisen. Da man dann unter Umständen diesen Effekt in mehreren Variablen merkt, ist es sinnvoll die Kovarianzstruktur genauer zu betrachten, um nur die Variablen zu beachten die einen hohen Beitrag zur Gesamtvarianz haben.
+
+Um den Einfluss von Spalten mit einem hohen Anteil fehlender Werte zu vermeiden, wurden nur jene Variablen beibehalten, für die mindestens 80 % der Werte vorhanden waren. Die Variablen wurden dabei standardisiert (z-Transformation), um unterschiedliche Skalierungen zu neutralisieren. Aus der Rotationsmatrix der PCA ($rotation) wurde der Gesamtbeitrag jeder Variablen zu den ersten drei Hauptkomponenten berechnet. Dazu wurde für jede Variable die Summe der quadrierten Ladungen (loadings) über die ersten drei Komponenten gebildet. Dieses Maß beschreibt, in welchem Ausmaß eine Variable zur erklärten Varianz der wichtigsten Komponenten beiträgt. Auf dieser Grundlage wurden die zehn Variablen mit dem höchsten Gesamtbeitrag ausgewählt, da sie die größte strukturelle Bedeutung innerhalb der Daten aufweisen. Im Anschluss wurde für diese Variablen die Pearson-Korrelation mit der Zielvariablen Life Ladder berechnet, um zu untersuchen, welche dieser zentralen Variablen am stärksten mit dem subjektiven Wohlbefinden (Life Ladder) zusammenhängen.
+Die Hauptkomponentenanalyse wurde unabhängig von der Zielvariable Life Ladder durchgeführt und dient nicht zur Analyse der Korrelation, sondern als Maßnahme zur vorverarbeitung der Daten die die Dimension der Daten verringern soll. 
+
+```{r, include=FALSE}
 #PCA für die Grafik
 prcomp(na.omit(num_cols), scale. = TRUE)
 #Sehr viele NA deswegen Spalten entfernen wo sehr viele NA sind 
@@ -207,23 +233,46 @@ importance_df <- data.frame(
 )
 
 importance_df <- importance_df[, !names(importance_df) %in% c("Year", "Life_Ladder")]
-top10 <- importance_df[order(-importance_df$Importance), ][1:10, ]$Variable
+top15 <- importance_df[order(-importance_df$Importance), ][1:15, ]$Variable
+
+eig <- prcomp(na.omit(num_cols_wo_NA), scale. = TRUE)$sdev^2
+explained_var <- eig/ sum(eig)
+loading_perc <- PCS^2
+
+var_explained_col <- as.numeric(loading_perc %*% explained_var)
+
+var_df <- data.frame(
+  Spalte = rownames(PCS),
+  Varianz_erklärt = var_explained_col
+)
 
 
-ggplot(cor_df[cor_df$Variable %in% top10,], aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation)) +
+
+
+```
+```{r}
+ggplot(cor_df[cor_df$Variable %in% top15,], aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation)) +
   geom_bar(stat = "identity", na.rm = TRUE) +
   coord_flip() +
   scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  labs(title = "Correlation mit Life_Ladder [only 10 most important]",
+  labs(title = "Correlation mit Life_Ladder [only 15 most important]",
        x = "Variable", y = "Correlation") +
   theme_minimal() +
   theme(axis.text = element_text(size = 10),
         plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+sum(var_df[var_df$Spalte %in% top15,]$Varianz_erklärt)
 
 ```
 
 
+Die 15 in der Grafik dargestellten Variablen weisen den höchsten Beitrag zur Varianz auf. Insgesamt erklären machen diese 15 Spalten 93.75% der gesamten Varianz aus. Die stärkste positive Korrelation liegt bei dem logarithmierten Pro-Kopf Bruttoninlandsprodukt und Life Ladder vor.
 
+
+Der Gini-Koeffizient ist ein Maß zur Beschreibung der Ungleichheit einer Verteilung. Er wird häufig verwendet, um die Verteilung von Einkommen oder Vermögen in einer Bevölkerung zu quantifizieren. Der Wert liegt zwischen 0 und 1: Ein Gini-Koeffizient von 0 bedeutet vollständige Gleichheit (alle besitzen gleich viel), während ein Wert von 1 maximale Ungleichheit beschreibt (eine Person besitzt alles, alle anderen nichts).
+In der folgenden Analyse wird der Gini Koeffizient für den Life Ladder Score, sowie für das Pro-Kopf Bruttoinlandsprodukt berechnet. 
 
 ```{r}
 #Gini Koeffizient 
@@ -241,7 +290,7 @@ means %>% summarise(Gini_Score_Ladder = Gini(Life_Ladder, na.rm = TRUE))
 # Unterschied zwischen der Verteilung von Life Ladder und von Log GDP per Capita
 
 
-ggplot(means, aes(x = exp(Log_GDP_per_capita), y = Life_Ladder)) +
+ggplot(means, aes(x = (Log_GDP_per_capita), y = Life_Ladder)) +
   geom_point(aes(color = Country_name), alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, color = "black") +
   theme_minimal() +
@@ -253,6 +302,28 @@ ggplot(means, aes(x = exp(Log_GDP_per_capita), y = Life_Ladder)) +
   ) + theme(legend.position = "none")
 
 
+df_sorted_GDP <- means[order(means$Log_GDP_per_capita), ]
+
+df_sorted_GDP$cum_share <- cumsum(exp(df_sorted_GDP$Log_GDP_per_capita)) / sum(exp(df_sorted_GDP$Log_GDP_per_capita), na.rm = TRUE)
+
+
+length(na.omit(df_sorted_GDP[df_sorted_GDP$cum_share > 0.5,]$Country_name))
+
+df_sorted_LL <- means[order(means$Life_Ladder), ]
+
+df_sorted_LL$cum_share <- cumsum(df_sorted_LL$Life_Ladder) / sum(df_sorted_GDP$Life_Ladder, na.rm = TRUE)
+
+length(na.omit(df_sorted_LL[df_sorted_LL$cum_share > 0.5,]$Country_name))
+
+# Lebenszufriedenheit ist nicht so ungleich verteilt wie das Pro Kopf Einkommen
 ```
 
+Bei der Betrachtung der beiden Gini Koeffizienten fällt auf das Pro-Kopf Bruttoinlandsprodukt stärker auf wenige Länder konzentriert ist als der Life Ladder Score.
+
+```{r}
+summary(lm(data = means,formula = Life_Ladder ~ Log_GDP_per_capita + Social_support + Democratic_Quality))
+
+
+summary(lm(data = means, formula = Life_Ladder ~ Healthy_life_expectancy_at_birth))
+```
 
