@@ -9,6 +9,7 @@ In dem vorliegenden Datensatz liegen insgesamt 1784 Beobachtungen vor.
 ```{r, results='hold'}
 library("dplyr")
 library("ggplot2")
+library("ineq")
 library("corrplot")
 
 df <- read.csv2(
@@ -132,7 +133,7 @@ ggplot(data = time, aes(x = Year, y = Life_Ladder, group = Country_name, color =
   facet_wrap(~Country_name, scales = "fixed", ncol = 5)
 ```
 
-In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt den schlechtesten Wert für Zufriedenheit haben eine größere Streuung besitzen als die Länder die einen guten Wert für Zufriedenheit haben. Dies gilt zum einen über die jeweiligen Zeitspannen für die Daten existieren, als auch innerhalb der Gruppen der Länder mit dem höchsten/ niedrigsten durchschnittlichen Wert.
+In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt den schlechtesten Wert für Zufriedenheit haben eine größere Streuung besitzen als die Länder die einen guten Wert für Zufriedenheit haben. Dies gilt zum einen über die jeweiligen Zeitspannen für die Daten existieren, als auch innerhalb der Gruppen der Länder mit dem höchsten/niedrigsten durchschnittlichen Wert.
 
 ```{r, results='hold'}
 # Abweichungen innerhalb der guten Länder
@@ -144,6 +145,7 @@ bad_sd <- sd(df[df$Country_name %in% c("South Sudan", "Togo", "Central African R
 paste("Die Standardabweichung innerhalb der Länder mit dem schlechtesten Score beträgt:",round(bad_sd,3), "Die Standardabweichung innerhalb der Länder mit dem besten Score beträgt:", round(good_sd,3))
 ```
 
+Es soll der Zusammenhang zwischen der "Hauptvariable" Life Ladder und den restlichen erhobenen Variablen ermittelt werden. Um den Zusammenhang zwischen Variablen zu messen benötigt man ein geeignetes Zusammenhangsmaß.Ein solches Maß ist beispielsweise der Bravais Pearson Korrelationskoeffizient, welcher Werte innerhalb von [-1,1] annehmen kann, wobei ein Wert von -1 eine starke negative Korrelation ausdrückt, ein Wert von 1 eine starke positive Korrelation beschreibt und ein Wert von 0 unkorreliertheit zwischen zwei Variablen bedeutet. 
 
 ```{r, results='hold'}
 #### Kovarianzstruktur 
@@ -156,10 +158,6 @@ num_df <- means[sapply(means, is.numeric)]
 
 sum(is.na(num_df))
 
-corrplot(cor(na.omit(num_df), use = "pairwise.complete.obs"), 
-         method = "color", type = "upper")
-
-  
 num_cols <- df[sapply(df, is.numeric)]
 
 
@@ -231,6 +229,29 @@ ggplot(cor_df[cor_df$Variable %in% top10,], aes(x = reorder(Variable, Correlatio
 #Gini Koeffizient 
 
 # last_year <- df %>% group_by("Country_Name") %>% 
+
+
+means
+
+means %>% summarise(Gini_Score_LGDP = Gini(exp(Log_GDP_per_capita), na.rm = TRUE))
+
+means %>% summarise(Gini_Score_Ladder = Gini(Life_Ladder, na.rm = TRUE))
+
+
+# Unterschied zwischen der Verteilung von Life Ladder und von Log GDP per Capita
+
+
+ggplot(means, aes(x = exp(Log_GDP_per_capita), y = Life_Ladder)) +
+  geom_point(aes(color = Country_name), alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  theme_minimal() +
+  labs(
+    title = "Zusammenhang zwischen Log GDP per Capita und Life Ladder",
+    x = "Durchschnittliches Log GDP per Capita",
+    y = "Durchschnittlicher Life Ladder Score",
+    color = "Land"
+  ) + theme(legend.position = "none")
+
 
 ```
 
