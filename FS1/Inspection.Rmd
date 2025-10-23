@@ -1,44 +1,89 @@
 ---
 title: "Bericht 1 Fallstudien"
 output:
+  html_document:
+    df_print: paged
   pdf_document: default
 date: "2025-10-17"
 ---
-Die erhobenen Daten sind Erhebungen zu dem Thema Glücksempfinden in insgesamt 165 Ländern die über die Jahre 2005 bis 2018 erhoben wurden. Es gibt 24 Variablen die für ein Land in einem Jahr jeweils erhoben wurden. 
-In dem vorliegenden Datensatz liegen insgesamt 1784 Beobachtungen vor.
+Die erhobenen Daten sind Erhebungen zu dem Thema Glücksempfinden in insgesamt 165 Ländern die über die Jahre 2008 bis 2018 erhoben wurden. Es gibt 24 Variablen die für ein Land in einem Jahr jeweils erhoben wurden. In den Daten sind 165 unterschiedliche Länder enthalten. Von diesen haben 70 Länder Beobachtungen über den gesamten Zeitraum von 2008 bis 2018
+In dem vorliegenden Datensatz liegen insgesamt 1784 Beobachtungen vor. Es gibt in den Daten 38636 Zellen, von denen 9853 NA Werte enthalten. 
 
 ```{r, include=FALSE}
 library("dplyr")
 library("ggplot2")
 library("ineq")
 library("corrplot")
+library("WDI")
+library("rnaturalearth")
+library("sf")
+library("dplyr")
+
 
 df <- read.csv2(
   file = "C:\\Users\\maxim\\Desktop\\Fallstudien\\FS1\\Data\\Happiness.csv",
   na.strings = c("", "NA"),
   fileEncoding = "UTF-8",   
   check.names = FALSE       
-)
+) %>% filter(Year >= 2008)
+
+names(df) <- gsub(" ", "_", names(df))
 
 length(unique(df$Country_name))
 
 sum(is.na(df))
 (colSums(is.na(df)))
 
-data.frame(
+na_count <- data.frame(
   Spalte = names(df),
   Anzahl_NA = colSums(is.na(df))
 )
 
+sum(na_count[na_count$Anzahl_NA > 250,]$Anzahl_NA)
+
+# Korrelation
+cor(df$GINI_index_(World_Bank_estimate), df$GINI_index_(World_Bank_estimate),_average_2000-16, use = "pairwise.complete.obs")
+
+# Anzahl Länder die von 2008 bis 2018 Daten haben
+df %>%
+    filter(Year >= 2008, Year <= 2018) %>%           # Nur Jahre 2008–2018
+    group_by(Country_name) %>%                       # Nach Land gruppieren
+    summarise(n_years = n_distinct(Year)) %>%        # Anzahl unterschiedlicher Jahre
+    filter(n_years == 11) %>%                        # Nur Länder mit allen 11 Jahren
+    summarise(n_countries = n())
+
+df %>%
+    filter(Year >= 2008, Year <= 2018) %>%           # Nur Jahre 2008–2018
+    group_by(Country_name) %>%                       # Nach Land gruppieren
+    summarise(n_years = n_distinct(Year)) %>%        # Anzahl unterschiedlicher Jahre
+    filter(n_years == 10) %>%                        # Nur Länder mit allen 10 Jahren
+    summarise(n_countries = n())
+
+ggplot(na_count[na_count$Anzahl_NA != 0,], aes(x = reorder(Spalte, Anzahl_NA), y = Anzahl_NA)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +  # Damit Spaltennamen lesbarer sind
+  labs(
+    title = "Überblick über die Verteilung der fehlenden Werte",
+    x = "Variablenname",
+    y = "Anzahl fehlender Werte"
+  ) +
+  theme_minimal(base_size = 12)
 ```
-Um zu ermitteln welche Länder den höchsten Zufriedenheitswert haben wird der jeweilige Durchschnitt über die in den Daten vorhandenen Jahre beobachtete Zufriedenheit berechnet. Anschließend werden die Länder nach diesem Durchschnittswert sortiert. Woraus sich eine Liste ergibt welche Länder sich gut und nicht gut zum auswandern eignen.
+Da die acht Variablen mit den meisten NA Zählungen bereits ungefähr 89% der gesamten NA Zählungen ausmachen, werden diese acht Variablen aus der weitergehenden Arbeit ausgeschlossen. Von den acht ausgeschlossenen Variablen messen sieben den Wert für "Most people can be trusted". Die Variablen die diesen Wert messen unterscheiden sich nur durch das Jahr der Erhebung und der dem Erhebungsinstitut.
+Außerdem beziehen sich einige Variablen auf die Zeit vor 2008. Da diese sieben Variablen im Grunde einen ähnlichen Aspekt betrachten, führt ein Ausschluss nicht zu einem Informationsverlust.
+
+Die andere Variable ist der GINI index, der auf einer Schätzung von der Weltbank beruht. Der Aspekt der Vermögenskonzentration wird ebenfalls durch die Variable "GINI index (World Bank estimate), average 2000-16" abgedeckt ist und die Korrelation von beiden GINI Indizes ist bei ungefähr 0.975. Daher wird  
+
+
+Um zu ermitteln welche Länder den höchsten Zufriedenheitswert haben wird der jeweilige Durchschnitt über die in den Daten vorhandenen Jahre beobachtete Zufriedenheit berechnet. Anschließend werden die Länder nach diesem Durchschnittswert sortiert. Woraus sich eine Liste ergibt welche Länder sich gut und nicht gut zum auswandern eignen. In dem Datensatz sind 
 
 ```{r, include=FALSE}
-# Welche L¨ander haben den h¨ochsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
+# Welche Länder haben den höchsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
 # als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung
 # mit dem Gesamtscore?
 
-names(df) <- gsub(" ", "_", names(df))
+
+
 
 means <- df %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), mean, na.rm = TRUE))
 
@@ -58,25 +103,37 @@ best_worst <- rbind(best, worst)
 
 ```{r}
 # Grafiken im Mittel
-ggplot(best_worst, aes(x = reorder(Country_name, Life_Ladder),
+mean_plot <- ggplot(best_worst, aes(x = reorder(Country_name, Life_Ladder),
                        y = Life_Ladder,
                        fill = Life_Ladder)) +
   geom_bar(stat = "identity") +
   scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
   geom_text(aes(label = round(Life_Ladder, 2)),                            
             vjust = -0.3, size = 3.5) +
-  labs(x = "Countries",
-       y = "Life Ladder Score [mean]",
-       title = "Worst/Best five Countries in Happiness Score") +
+  labs(x = "",
+       y = "Durchschnitt [Life Ladder Score]",
+       title = "Die 5 besten/schlechtesten Länder im Durchschnitt [Life Ladder]") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1))
+  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1)) + 
+    theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
 
+ggsave("mean_plot.png", plot = mean_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
 
-
-
+mean_plot
 ```
 
+
+```{r}
+# Aufgabe 1)
+# Gesamtscore:
+# Welche Länder haben den h¨ochsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
+# als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung
+# mit dem Gesamtscore?
+```
 
 
 In der Abbildung sind die fünf Länder mit dem durchschnittlich besten und schlechtesten Wert abgebildet. Die Länder welche den höchsten durchschnittlichen Wert haben und sich damit am besten zum auswandern eignen sind die Niederlande mit einem durchschnittlichen Wert von ungefähr 7.47, die Schweiz mit einem Durchschnitt von 7.53, Norwegen und Finnland mit einem Wert von je 7.55 und Dänemark mit dem höchsten durchschnittlichen Wert von 7.69. Zu den Ländern mit dem schlechtesten durchschnittlichen Wert zählen Süd Sudan, Togo, die Zentralafrikanische Republik, Burundi sowie Ruanda. 
@@ -101,20 +158,24 @@ best_worst_med <- rbind(best_med, worst_med)
 ```
 
 ```{r}
-ggplot(best_worst_med, aes(x = reorder(Country_name, Life_Ladder),
+ggsave("median_plot.png", plot = median_plot, dpi = 600, width = 16, height = 9, units = "cm", bg = "white")
+median_plot <- ggplot(best_worst_med, aes(x = reorder(Country_name, Life_Ladder),
                        y = Life_Ladder,
                        fill = Life_Ladder)) +
   geom_bar(stat = "identity") +
   scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
   geom_text(aes(label = round(Life_Ladder, 2)),                            
             vjust = -0.3, size = 3.5) +
-  labs(x = "Countries",
-       y = "Life Ladder Score [median]",
-       title = "Worst/Best five Countries in Happiness Score") +
+  labs(x = "",
+       y = "Life Ladder Score [Median]",
+       title = "Die 5 besten/schlechtesten Länder im Median [Life Ladder]") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1))
-
+  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1)) +   theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+median_plot
 ```
 
 
@@ -123,27 +184,76 @@ Bei den fünf Ländern mit dem besten Wert (im Median) gehört nun Island statt 
 
 Außerdem werden die einzelnen Jahre für die Daten existieren in einem zeitlichen Verlauf dargestellt um die Streuung der Daten zu beurteilen, dafür werden die 10 Länder aus der Grafik mit dem arithmetischen Mittel verwendet.
 
+```{r}
+
+latest_data <- df %>% filter(Year == 2018) 
+
+latest_data_best <- latest_data[order(latest_data$Life_Ladder),][1:5,]
+
+latest_data_worst <- latest_data[order(latest_data$Life_Ladder, decreasing = TRUE),][1:5,]
+
+best_worst_latest_data <- rbind(latest_data_best, latest_data_worst) %>% arrange(Life_Ladder)
+
+
+
+latest <- ggplot(best_worst_latest_data, aes(x = reorder(Country_name, Life_Ladder),
+                       y = Life_Ladder,
+                       fill = Life_Ladder)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
+  geom_text(aes(label = round(Life_Ladder, 2)),                            
+            vjust = -0.3, size = 3.5) +
+  labs(x = "",
+       y = "Life Ladder Score",
+       title = "Die 5 besten/schlechtesten im Jahr 2018 [Life Ladder]") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1)) +   theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+ggsave("latest_score.png", plot = latest, dpi = 600, width = 16, height = 9, units = "cm", bg = "white")
+latest
+```
+
+
+
 ```{r, include=FALSE}
 # Zeitlicher Verlauf
 
 time <- df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda", "Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]
 
+time$Country_name[time$Country_name == "Central African Republic"] <- "Central African R."
+
 time$Country_name <- factor(
   time$Country_name,
-  levels = c("Finland", "Denmark", "Norway", "Switzerland", "Netherlands",
-             "Rwanda", "Burundi", "Togo", "Central African Republic", "South Sudan")
+  levels = c("Denmark", "Finland", "Norway", "Switzerland", "Netherlands",
+             "Rwanda", "Burundi", "Central African R.", "Togo", "South Sudan")
 )
 
 time$col <- ifelse(time$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),"Good_Score","Bad_Score")
 
 
 ```
+
+
 ```{r}
-ggplot(data = time, aes(x = Year, y = Life_Ladder, group = Country_name, color = col))+geom_line()+ geom_point()+theme_minimal()+
-  labs(x = "Time Span", y = "Life Ladder Score", title = "Chronological Sequence of Ladder Score")+
-  # scale_x_continuous(breaks = sort(unique(time$Year)))+
-  scale_color_manual(values = c("Good_Score" = "darkgreen", "Bad_Score" = "tomato"))+
-  facet_wrap(~Country_name, scales = "fixed", ncol = 5)
+timeplot <- ggplot(data = time[time$Year >= 2008,], aes(x = Year, y = Life_Ladder, group = Country_name, color = col)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Jahre [%y]", y = "Life Ladder Score", title = "Zeitlicher Verlauf des Life Ladder Scores") +
+  scale_color_manual(values = c("Good_Score" = "darkgreen", "Bad_Score" = "tomato")) +
+  scale_x_continuous(
+    breaks = seq(2008, 2018, by = 2),                 # alle 2 Jahre anzeigen
+    labels = substring(seq(2008, 2018, by = 2), 3, 4) # nur letzte zwei Ziffern
+  ) +
+  facet_wrap(~Country_name, scales = "fixed", ncol = 5)+theme(legend.position = "none") +   theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+timeplot
+ggsave("time_plot.png", plot = timeplot, dpi = 600, width = 5.82, height = 3.6, units = "in", bg = "white")
 ```
 
 
@@ -186,8 +296,52 @@ cor_df <- data.frame(
   Correlation = as.numeric(cov_df)
 )
 
+feature_selection <- df %>% select(- c("Most_people_can_be_trusted,_WVS_round_1981-1984", "Most_people_can_be_trusted,_Gallup", "Most_people_can_be_trusted,_WVS_round_1989-1993", "Most_people_can_be_trusted,_WVS_round_1999-2004", "Most_people_can_be_trusted,_WVS_round_1994-1998",
+"Most_people_can_be_trusted,_WVS_round_2005-2009", "GINI_index_(World_Bank_estimate)", "Most_people_can_be_trusted,_WVS_round_2010-2014"))                                  
+
+feature_selection_means <- feature_selection %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+fs_num <- feature_selection_means[sapply(feature_selection_means, is.numeric)]
+
+fs_cov_df <- as.data.frame(t(cor(fs_num, use = "pairwise.complete.obs")["Life_Ladder", ]))
+
+fs_cor_df <- data.frame(
+  Variable = names(fs_cov_df),
+  Correlation = as.numeric(fs_cov_df)
+)
+
+fs_cor_df$nice_name <- c("Life Ladder", "Log GDP per Capita", "Social Support", "Healthy Life Expectancy at birth", "Freedom to make life choices", "Generosity", "Perception of corruption", "Positive affect", "Negative affect", "Confidence in national government", "Democratic quality", "Delivery quality", "sd of ladder by country-year", "sd/mean of ladder by country-year", "Gini Index (World Bank) average 2000-2016","Gini Index of household income (Gallup)")
 
 
+
+
+corplot <- ggplot(fs_cor_df, aes(x = reorder(nice_name, Correlation), y = Correlation, fill = Correlation)) +
+  geom_bar(stat = "identity", na.rm = TRUE)  +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "Korrelation mit Life Ladder",
+       x = "", y = "Korrelation [-1,1]") +
+  geom_text(aes(label = round(Correlation, 2)), 
+            hjust = ifelse(fs_cor_df$Correlation > 0, -0.1, 1.1), 
+            size = 3) +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 10),
+        plot.title = element_text(hjust = 0.5))+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )+scale_y_continuous(limits = c(-1, 1)*1.25) +
+coord_flip() 
+ggsave("cor_plot.png", plot = corplot, dpi = 600, width = 5.82, height = 3.51, units = "in", bg = "white")
+  corplot
+
+ggplot(cor_df, aes(x = reorder(Variable, Correlation), y = Correlation, fill = Correlation)) +
+  geom_bar(stat = "identity", na.rm = TRUE) +
+  coord_flip() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "Korrelation mit Life Ladder",
+       x = "", y = "Korrelation [-1,1]") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 10),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
@@ -259,7 +413,7 @@ ggplot(cor_df[cor_df$Variable %in% top15,], aes(x = reorder(Variable, Correlatio
        x = "Variable", y = "Correlation") +
   theme_minimal() +
   theme(axis.text = element_text(size = 10),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5))+coord_cartesian(xlim(-1,1))
 ```
 
 ```{r}
@@ -274,6 +428,15 @@ Die 15 in der Grafik dargestellten Variablen weisen den höchsten Beitrag zur Va
 Der Gini-Koeffizient ist ein Maß zur Beschreibung der Ungleichheit einer Verteilung. Er wird häufig verwendet, um die Verteilung von Einkommen oder Vermögen in einer Bevölkerung zu quantifizieren. Der Wert liegt zwischen 0 und 1: Ein Gini-Koeffizient von 0 bedeutet vollständige Gleichheit (alle besitzen gleich viel), während ein Wert von 1 maximale Ungleichheit beschreibt (eine Person besitzt alles, alle anderen nichts).
 In der folgenden Analyse wird der Gini Koeffizient für den Life Ladder Score, sowie für das Pro-Kopf Bruttoinlandsprodukt berechnet. 
 
+
+```{r}
+# Aufgabe 2)
+# Gini Index:
+# Bestimmen Sie den Gini-Index aller Länder für das letzte Jahr.
+```
+
+
+
 ```{r}
 #Gini Koeffizient 
 
@@ -286,7 +449,9 @@ means %>% summarise(Gini_Score_LGDP = Gini(exp(Log_GDP_per_capita), na.rm = TRUE
 
 means %>% summarise(Gini_Score_Ladder = Gini(Life_Ladder, na.rm = TRUE))
 
+df %>% summarise(Gini_Score_LGDP = Gini(exp(Log_GDP_per_capita), na.rm = TRUE))
 
+df %>% filter(Year == 2018) %>% summarise(Gini_Score_Ladder = Gini(Life_Ladder, na.rm = TRUE))
 # Unterschied zwischen der Verteilung von Life Ladder und von Log GDP per Capita
 
 
@@ -323,7 +488,88 @@ Bei der Betrachtung der beiden Gini Koeffizienten fällt auf das Pro-Kopf Brutto
 ```{r}
 summary(lm(data = means,formula = Life_Ladder ~ Log_GDP_per_capita + Social_support + Democratic_Quality))
 
-
 summary(lm(data = means, formula = Life_Ladder ~ Healthy_life_expectancy_at_birth))
+```
+
+
+
+```{r}
+# Gini
+
+gini_data <- WDI::WDI(
+  country = "all",
+  indicator = "SI.POV.GINI",
+  start = 2018, end = 2018
+)
+
+
+ggplot(gini_data) +
+  geom_sf(aes(fill = SI.POV.GINI)) +
+  scale_fill_viridis_c() +
+  labs(title = "Weltweite Einkommensungleichheit (Gini-Index, 2018)")
+
+
+
+# 1️⃣ Gini-Daten holen
+gini_data <- WDI(
+  country = "all",
+  indicator = "SI.POV.GINI",
+  start = 2018, end = 2018
+)
+
+# 2️⃣ Weltkarte holen
+world <- ne_countries(returnclass = "sf")
+
+# 3️⃣ Daten zusammenführen (nach ISO-Code)
+world_gini <- left_join(world, gini_data, by = c("iso_a2" = "iso2c"))
+
+# 4️⃣ Plot
+world_plot <- ggplot(world_gini) +
+  geom_sf(aes(fill = SI.POV.GINI/100)) +
+  scale_fill_viridis_c(
+    na.value = "lightgrey",
+    name = "Gini-Index"
+  ) +
+  labs(
+    title = "Weltkarte mit Gini-Index für das Jahr 2018 [WDI]",
+  ) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.grid = element_blank()
+  )+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+ggsave("world_plot.png", plot = world_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+sum(is.na(world_gini$SI.POV.GINI))
+sum(is.na(df[df$Year == 2018,]$`GINI_index_(World_Bank_estimate),_average_2000-16`))
+sum(is.na(df[df$Year == 2018,]$`GINI_index_(World_Bank_estimate)`))
+
+```
+
+
+
+```{r}
+# Fehlende Werte:
+# In einigen Bereichen ist der Datensatz nicht komplett. Wie kann das zustande kommen und wie
+# könnte man bei der Deskription darauf eingehen?
+
+```
+
+
+
+```{r}
+# Da Paul gerne asiatisch isst, interessiert ihn besonders der Vergleich von Hong Kong, China und
+# Deutschland. Dieser sollte f¨ur ihn entsprechend optisch aufbereitet werden.
+
+```
+
+
+
+```{r}
+# Untersuchen Sie zus¨atzlich 3 weitere Aspekte Ihrer Wahl.
+
 ```
 

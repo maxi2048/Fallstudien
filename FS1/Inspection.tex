@@ -145,6 +145,16 @@ Länder sich gut und nicht gut zum auswandern eignen.
 
 \includegraphics{Inspection_files/figure-latex/unnamed-chunk-3-1.pdf}
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Aufgabe 1)}
+\CommentTok{\# Gesamtscore:}
+\CommentTok{\# Welche Länder haben den h¨ochsten/niedrigsten Gesamtscore und eignen sich deswegen besonders}
+\CommentTok{\# als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung}
+\CommentTok{\# mit dem Gesamtscore?}
+\end{Highlighting}
+\end{Shaded}
+
 In der Abbildung sind die fünf Länder mit dem durchschnittlich besten
 und schlechtesten Wert abgebildet. Die Länder welche den höchsten
 durchschnittlichen Wert haben und sich damit am besten zum auswandern
@@ -176,7 +186,7 @@ Median bestimmt um die Robustheit dieser Ergebnisse zu überprüfen.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{Inspection_files/figure-latex/unnamed-chunk-5-1.pdf}
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-6-1.pdf}
 
 Diese Abbildung bestätigt die Ergebnisse aus der Abbildung die auf den
 Werten basierend auf dem arithmetischen Mittel basierten. Die fünf
@@ -202,7 +212,7 @@ verwendet.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{Inspection_files/figure-latex/unnamed-chunk-7-1.pdf}
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-8-1.pdf}
 
 In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt
 den schlechtesten Wert für Zufriedenheit haben eine größere Streuung
@@ -251,7 +261,7 @@ von 0 unkorreliertheit zwischen zwei Variablen bedeutet.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{Inspection_files/figure-latex/unnamed-chunk-10-1.pdf}
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-11-1.pdf}
 
 In dieser Abbildung sind die Korrelationen jeder Variable mit Life
 Ladder dargestellt. Die Korrelation von Life Ladder zu sich selber
@@ -298,7 +308,7 @@ verringern soll.
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{Inspection_files/figure-latex/unnamed-chunk-12-1.pdf}
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-13-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -323,6 +333,14 @@ Gleichheit (alle besitzen gleich viel), während ein Wert von 1 maximale
 Ungleichheit beschreibt (eine Person besitzt alles, alle anderen
 nichts). In der folgenden Analyse wird der Gini Koeffizient für den Life
 Ladder Score, sowie für das Pro-Kopf Bruttoinlandsprodukt berechnet.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Aufgabe 2)}
+\CommentTok{\# Gini Index:}
+\CommentTok{\# Bestimmen Sie den Gini{-}Index aller Länder für das letzte Jahr.}
+\end{Highlighting}
+\end{Shaded}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -386,6 +404,28 @@ Ladder Score, sowie für das Pro-Kopf Bruttoinlandsprodukt berechnet.
 
 \begin{Shaded}
 \begin{Highlighting}[]
+\NormalTok{df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{Gini\_Score\_LGDP =} \FunctionTok{Gini}\NormalTok{(}\FunctionTok{exp}\NormalTok{(Log\_GDP\_per\_capita), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Gini_Score_LGDP
+## 1       0.5173427
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(Year }\SpecialCharTok{==} \DecValTok{2018}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{summarise}\NormalTok{(}\AttributeTok{Gini\_Score\_Ladder =} \FunctionTok{Gini}\NormalTok{(Life\_Ladder, }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Gini_Score_Ladder
+## 1         0.1139761
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \CommentTok{\# Unterschied zwischen der Verteilung von Life Ladder und von Log GDP per Capita}
 
 
@@ -416,7 +456,7 @@ Ladder Score, sowie für das Pro-Kopf Bruttoinlandsprodukt berechnet.
 ## (`geom_point()`).
 \end{verbatim}
 
-\includegraphics{Inspection_files/figure-latex/unnamed-chunk-14-1.pdf}
+\includegraphics{Inspection_files/figure-latex/unnamed-chunk-16-1.pdf}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -516,5 +556,27 @@ Life Ladder Score.
 ## Multiple R-squared:  0.6282, Adjusted R-squared:  0.6258 
 ## F-statistic: 270.3 on 1 and 160 DF,  p-value: < 2.2e-16
 \end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Fehlende Werte:}
+\CommentTok{\# In einigen Bereichen ist der Datensatz nicht komplett. Wie kann das zustande kommen und wie}
+\CommentTok{\# könnte man bei der Deskription darauf eingehen?}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Da Paul gerne asiatisch isst, interessiert ihn besonders der Vergleich von Hong Kong, China und}
+\CommentTok{\# Deutschland. Dieser sollte f¨ur ihn entsprechend optisch aufbereitet werden.}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Untersuchen Sie zus¨atzlich 3 weitere Aspekte Ihrer Wahl.}
+\end{Highlighting}
+\end{Shaded}
+
 
 \end{document}

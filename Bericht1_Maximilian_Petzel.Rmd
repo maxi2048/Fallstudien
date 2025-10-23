@@ -1,0 +1,19 @@
+Die erhobenen Daten sind Erhebungen zu dem Thema Glücksempfinden in insgesamt 165 Ländern die über die Jahre 2008 bis 2018 erhoben wurden. Es gibt 24 Variablen die für ein Land in einem Jahr jeweils erhoben wurden. In den Daten sind 165 unterschiedliche Länder enthalten. Von diesen haben 70 Länder Beobachtungen über den gesamten Zeitraum von 2008 bis 2018
+In dem vorliegenden Datensatz liegen insgesamt 1784 Beobachtungen vor. Es gibt in den Daten 38636 Zellen, von denen 9853 NA Werte enthalten. 
+<!-- Plot -->
+Da die acht Variablen mit den meisten NA Zählungen bereits ungefähr 89% der gesamten NA Zählungen ausmachen, werden diese acht Variablen aus der weitergehenden Arbeit ausgeschlossen. Von den acht ausgeschlossenen Variablen messen sieben den Wert für "Most people can be trusted". Die Variablen die diesen Wert messen unterscheiden sich nur durch das Jahr der Erhebung und der dem Erhebungsinstitut.
+Außerdem beziehen sich einige Variablen auf die Zeit vor 2008. Da diese sieben Variablen im Grunde einen ähnlichen Aspekt betrachten, führt ein Ausschluss nicht zu einem Informationsverlust.
+
+Die andere Variable ist der GINI index, der auf einer Schätzung von der Weltbank beruht. Da der Aspekt der Vermögenskonzentration ebenfalls durch die Variable "GINI index (World Bank estimate), average 2000-16" abgedeckt ist, die Korrelation von beiden GINI Indizes ist bei ungefähr 0.975. Daher wird  
+
+Um zu ermitteln welche Länder den höchsten Zufriedenheitswert haben wird der jeweilige Durchschnitt über die in den Daten vorhandenen Jahre beobachtete Zufriedenheit berechnet. Anschließend werden die Länder nach diesem Durchschnittswert sortiert. Woraus sich eine Liste ergibt welche Länder sich gut und nicht gut zum auswandern eignen. In dem Datensatz sind 
+<!-- Plot -->
+In der Abbildung sind die fünf Länder mit dem durchschnittlich besten und schlechtesten Wert abgebildet. Die Länder welche den höchsten durchschnittlichen Wert haben und sich damit am besten zum auswandern eignen sind die Niederlande mit einem durchschnittlichen Wert von ungefähr 7.47, die Schweiz mit einem Durchschnitt von 7.53, Norwegen und Finnland mit einem Wert von je 7.55 und Dänemark mit dem höchsten durchschnittlichen Wert von 7.69. Zu den Ländern mit dem schlechtesten durchschnittlichen Wert zählen Süd Sudan, Togo, die Zentralafrikanische Republik, Burundi sowie Ruanda. 
+Diese Reihenfolge basiert auf dem arithmetischen Mittel, dieses hat einen Bruchpunkt von 1 und reagiert damit im allgemeinen sensibel auf Ausreißer. Deswegen wird zum einen der Median bestimmt um die Robustheit dieser Ergebnisse zu überprüfen. 
+<!-- Plot -->
+Diese Abbildung bestätigt die Ergebnisse aus der Abbildung die auf den Werten basierend auf dem arithmetischen Mittel basierten. Die fünf Länder mit dem schlechtesten Wert (im Median) sind bis auf Burundi, stattdessen gehört Benin dazu identisch. 
+Bei den fünf Ländern mit dem besten Wert (im Median) gehört nun Island statt Finnland zu den fünf Ländern mit dem höchsten Wert. Dänemark ist auch wenn man den Median als Metrik verwendet den höchsten Wert und auch die Reihenfolge der übrigen Länder weist eine Ähnlichkeit zu der vorherigen Abbildung auf. 
+
+Außerdem werden die einzelnen Jahre für die Daten existieren in einem zeitlichen Verlauf dargestellt um die Streuung der Daten zu beurteilen, dafür werden die 10 Länder aus der Grafik mit dem arithmetischen Mittel verwendet.
+<!-- Plot -->
+In dieser Abbildung fällt auf das die fünf Länder die im Durchschnitt den schlechtesten Wert für Zufriedenheit haben eine größere Streuung besitzen als die Länder die einen guten Wert für Zufriedenheit haben. Dies gilt zum einen über die jeweiligen Zeitspannen für die Daten existieren, als auch innerhalb der Gruppen der Länder mit dem höchsten/niedrigsten durchschnittlichen Wert.

@@ -1,0 +1,330 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  fontsize=12pt,
+  numbers=noenddot,
+  parskip=half,
+  listof=totoc,
+  bibliography=totoc,
+  headsepline=true,
+  footsepline=false,
+  DIV=12]{scrartcl}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
+\else
+\usepackage[bidi=default]{babel}
+\fi
+\babelprovide[main,import]{ngerman}
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
+\usepackage{graphicx}
+\usepackage{amsmath, amsfonts, amssymb, bbm, bm}
+\usepackage[authoryear]{natbib}
+\usepackage[onehalfspacing]{setspace}
+\usepackage{scrlayer-scrpage}
+\clearscrheadings
+\automark{section}
+\ihead{Fallstudien I}
+\chead{}
+\ohead{\headmark}
+\ifoot{}
+\cfoot{\pagemark}
+\ofoot{}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\subject{Fallstudien I}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Goodbye Deutschland - Eine ausgewählte Analyse des World Happiness Report},
+  pdfauthor={Maximilian Petzel},
+  pdflang={de},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Goodbye Deutschland - Eine ausgewählte Analyse des World
+Happiness Report}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Deskriptive Datenanalyse}
+\author{Maximilian Petzel}
+\date{28.10.2025}
+
+\begin{document}
+\maketitle
+
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\newpage
+
+\hypertarget{einleitung}{%
+\section{Einleitung}\label{einleitung}}
+
+Der World Happiness Report ist ein Bericht, der jährlich von den
+Vereinten Nationen veröffentlicht wird. Der Bericht hat das Ziel, die
+Lebenszufriedenheit in verschiedenen Ländern darzustellen.
+
+\hypertarget{erkluxe4rung-der-variablen}{%
+\section{Erklärung der Variablen}\label{erkluxe4rung-der-variablen}}
+
+\emph{(Hier deine Variablenbeschreibung einfügen.)}
+
+\hypertarget{uxfcberschriften}{%
+\section{Überschriften}\label{uxfcberschriften}}
+
+Überschriften werden mittels Markdown-Levels definiert (z. B.
+\texttt{\#}, \texttt{\#\#}, \texttt{\#\#\#}).
+
+\hypertarget{unteruxfcberschrift}{%
+\subsection{Unterüberschrift}\label{unteruxfcberschrift}}
+
+Mit \texttt{\#\#} wird anschließend gegliedert.
+
+\hypertarget{unterunteruxfcberschrift}{%
+\subsubsection{Unterunterüberschrift}\label{unterunteruxfcberschrift}}
+
+Noch kleinere Einheiten lassen sich mit \texttt{\#\#\#} gliedern.
+
+\hypertarget{ohne-nummerierung}{%
+\subsubsection{Ohne Nummerierung}\label{ohne-nummerierung}}
+
+Nicht nummerierte Abschnitte kannst du als Roh-LaTeX setzen, z. B.:
+
+\addsec{Ohne Nummerierung}
+
+\hypertarget{textformatierung}{%
+\section{Textformatierung}\label{textformatierung}}
+
+Fließtext kann \textbf{fett}, \underline{unterstrichen}, \emph{kursiv},
+\texttt{typewriter-artig} sein.
+
+Schriftgrößen können \{\Huge Huge\}, \{\huge huge\}, \{\LARGE LARGE\},
+\{\Large Large\}, \{\large large\}, \{\normalsize normalsize\},
+\{\small small\}, \{\footnotesize footnotesize\},
+\{\scriptsize scriptsize\} oder \{\tiny tiny\} sein.
+
+\hypertarget{grafiken-und-tabellen}{%
+\section{Grafiken und Tabellen}\label{grafiken-und-tabellen}}
+
+Grafiken und Tabellen werden oft in LaTeX-Umgebungen gesetzt. Du kannst
+in R Markdown sowohl reine Markdown-Grafiken als auch
+LaTeX-\texttt{figure} verwenden.
+
+Siehe Abbildung\textasciitilde{}\ref{grafik}, bzw.
+Tabelle\textasciitilde{}\ref{tabelle}. Bei weiter entfernten Grafiken
+und Tabellen, z. B. Abbildung\textasciitilde{}\ref{anhanggrafik}
+(S.\textasciitilde{}\pageref{anhanggrafik}), empfiehlt sich auch die
+Angabe der Seitenzahl.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{curve}
+  \caption{Jede Grafik sollte eine sinnvolle Beschreibung erhalten.}
+  \label{grafik}
+\end{figure}
+
+Für die hier gezeigte Tabelle (siehe
+Tabelle\textasciitilde{}\ref{tabelle}) wird das Paket \texttt{booktabs}
+verwendet.
+
+\begin{table}[h!]
+  \caption{Tabellen haben eine Überschrift, die deren Inhalt kurz beschreibt.}
+  \centering
+  \begin{tabular}{llcccc}
+    \toprule
+             &         &            & \multicolumn{3}{c}{Quartile} \\\cmidrule(lr){4-6}
+    Variable & Species & Mittelwert & 1. Q. & Median & 3. Q. \\
+    \midrule
+    Sepal Length & setosa     & 5.01 & 4.80 & 5.00 & 5.20 \\
+                 & versicolor & 5.94 & 5.60 & 5.90 & 6.30 \\
+                 & virginica  & 6.59 & 6.23 & 6.50 & 6.90 \\
+    Sepal Width  & setosa     & 3.43 & 3.20 & 3.40 & 3.68 \\
+                 & versicolor & 2.77 & 2.52 & 2.80 & 3.00 \\
+                 & virginica  & 2.97 & 2.80 & 3.00 & 3.18 \\
+    Petal Length & setosa     & 1.46 & 1.40 & 1.50 & 1.58 \\
+                 & versicolor & 4.26 & 4.00 & 4.35 & 4.60 \\
+                 & virginica  & 5.55 & 5.10 & 5.55 & 5.88 \\
+    Petal Width  & setosa     & 0.25 & 0.20 & 0.20 & 0.30 \\
+                 & versicolor & 1.33 & 1.20 & 1.30 & 1.50 \\
+                 & virginica  & 2.03 & 1.80 & 2.00 & 2.30 \\
+    \bottomrule
+  \end{tabular}
+  \label{tabelle}
+\end{table}
+
+\hypertarget{mathemodus}{%
+\section{Mathemodus}\label{mathemodus}}
+
+Der Mathemodus kann innerhalb eines Fließtextes gestartet und
+geschlossen werden: \(X: \Omega \mapsto \mathbbm{R}\). Auch abgesetzte
+Formeln können erzeugt werden: \[
+  \bar{x} = \frac{1}{n} \sum_{i = 1}^n x_i .
+\]
+
+Sollen Formeln durchnummeriert werden, so kann die
+\texttt{equation}-Umgebung verwendet werden: \begin{equation}
+  E(X) = \int_{-\infty}^{\infty} x f(x)\, dx, \label{ewert}
+\end{equation} wobei die Nummer, hier (\ref{ewert}), automatisch im Text
+verwendet werden kann, wenn ein \texttt{label} vorhanden ist.
+
+Mehrzeilige Gleichungen/Gleichungssysteme werden mit der
+\texttt{align}-Umgebung ausgerichtet: \begin{align}
+  1   &= 1+1 \nonumber\\
+  2+2 &= 4
+\end{align} Mit \texttt{nonumber} kann die Nummerierung in einzelnen
+Zeilen unterdrückt werden.
+
+Um die Durchnummerierung generell zu verhindern, kann auch
+\texttt{align*} verwendet werden: \begin{align*}
+  15 =&\; 5 + 4 + 3 \\
+      &+ 2 + 1
+\end{align*}
+
+Sollte die Schreibweise mathematischer Formeln in LaTeX noch nicht
+bekannt sein, so sei
+\url{https://en.wikibooks.org/wiki/LaTeX/Mathematics} als guter
+Überblick empfohlen.
+
+\hypertarget{aufzuxe4hlungen}{%
+\section{Aufzählungen}\label{aufzuxe4hlungen}}
+
+Wichtige Umgebungen für Aufzählungen sind \texttt{enumerate},
+\texttt{itemize} und \texttt{description}.
+
+\hypertarget{section}{%
+\subsection{\texorpdfstring{\texttt{enumerate}}{}}\label{section}}
+
+\begin{enumerate}
+  \item First item in a list
+  \item Second item in a list \begin{enumerate}
+    \item Item 1
+    \item Item 2
+  \end{enumerate}
+  \item Third item in a list
+\end{enumerate}
+
+\hypertarget{section-1}{%
+\subsection{\texorpdfstring{\texttt{itemize}}{}}\label{section-1}}
+
+\begin{itemize}
+  \item First item in a list
+    \begin{itemize}
+      \item First item in a list
+        \begin{itemize}
+          \item First item in a list
+          \item Second item in a list
+        \end{itemize}
+      \item Second item in a list
+    \end{itemize}
+  \item Second item in a list
+\end{itemize}
+
+\hypertarget{section-2}{%
+\subsection{\texorpdfstring{\texttt{description}}{}}\label{section-2}}
+
+\begin{description}
+  \item[GG] Grundgesamtheit
+  \item[$\mathcal{N}(0,1)$] Standardnormalverteilung
+  \item[u.i.v.] unabhängig identisch verteilt
+  \item[ZV] Zufallsvariable
+\end{description}
+
+\hypertarget{zitate}{%
+\section{Zitate}\label{zitate}}
+
+Zitate (unter Verwendung des \texttt{natbib}-Pakets) können innerhalb
+des Satzes mittels \texttt{\\citet}-Befehl eingefügt werden, wenn sie im
+Literaturverzeichnis eingetragen sind, z. B. \citet{Hsu91}. Genauere
+Angaben zum verwendeten Kapitel sind insbesondere bei Lehrbüchern
+sinnvoll, siehe \citet[Kapitel~3, S.~222]{Hartung09}. Sollen
+Literaturangaben komplett in Klammern hinter dem Satz erscheinen, so
+kann \texttt{\\citep} verwendet werden \citep{Milner14}.
+
+Jede im Literaturverzeichnis angegebene Quelle sollte im Text
+referenziert werden und jede im Text angegebene Quelle muss auch im
+Literaturverzeichnis vorhanden sein.
+
+Für komplexere Möglichkeiten zur Verwaltung und Darstellung von Quellen
+kann BibTeX verwendet werden.
+
+\newpage
+\appendix
+
+\addsec{Weitere Grafiken}
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{curve}
+  \caption{Die gleiche Grafik wie vorher, aber woanders.}
+  \label{anhanggrafik}
+\end{figure}
+
+\begin{thebibliography}{9}
+  \bibitem[Hartung et al.(2009)]{Hartung09} Hartung, J., Elpelt, B., \& Klösener, K. H. (2009). \emph{Statistik: Lehr- und Handbuch der angewandten Statistik}. Walter de Gruyter.
+  \bibitem[Hsu und Wu(1991)]{Hsu91} Hsu, S. H., \& Wu, S. P. (1991). An investigation for determining the optimum length of chopsticks. \emph{Applied Ergonomics}, 22(6), 395--400.
+  \bibitem[Milner und Rougier(2014)]{Milner14} Milner, K., \& Rougier, J. (2014). How to weigh a donkey in the Kenyan countryside. \emph{Significance}, 11(4), 40--43.
+\end{thebibliography}
+
+\end{document}
