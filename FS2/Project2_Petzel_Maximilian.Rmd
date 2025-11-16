@@ -1,0 +1,694 @@
+---
+title: "Bericht2"
+output: html_document
+date: "2025-10-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+summary(cars)
+```
+
+```{r}
+install.packages("haven") 
+library(haven)
+library(ggplot2)
+library(dplyr)
+
+Sandwich <- read_sav("Sandwich.sav")
+
+Sandwich <- Sandwich %>%
+  mutate(
+    Brot   = as_factor(Brot),
+    Belag  = as_factor(Belag),
+    Butter = as_factor(Butter)
+  )
+
+table(Sandwich$Brot)
+table(Sandwich$Belag)
+table(Sandwich$Butter)
+
+ftable(Sandwich$Butter, Sandwich$Belag, Sandwich$Brot)
+
+#Balancierter Versuchsplan
+```
+
+```{r}
+# Überprüfung der Annahmen, Varianz etc. 
+ggplot(Sandwich, aes(x =Ameisen)) + geom_density()+geom_histogram(bins = 7, fill = "steelblue")
+
+
+
+
+```
+
+
+
+```{r}
+base_model <- aov(Ameisen ~ Brot + Belag + Butter, data = Sandwich)
+
+lm_base_model <- lm(Ameisen ~ Brot + Belag + Butter, data = Sandwich)
+
+assumption_check_bm <- data.frame(res = resid(base_model), fit = fitted(base_model))
+
+
+ggplot(assumption_check_bm, aes(x = fit, y = res)) +
+  geom_point(alpha = 0.7) +
+  geom_hline(yintercept = 0, color = "red", linewidth = 0.8) +
+  theme_minimal() +
+  labs(
+    title = paste("Residuen vs. vorhergesagte Werte |","SSE:",round(sum(assumption_check_bm$res^2))),
+    x = "Vorhergesagte Werte",
+    y = "Residuen"
+  )
+
+qq_plot <- ggplot(assumption_check_bm, aes(sample = res)) +
+  stat_qq(aes(color = "Residuen")) +             # Punkte: Residuen
+  stat_qq_line(aes(color = "Theoretische Normalverteilung"), linewidth = 0.8) +  # Linie mit Label
+  scale_color_manual(
+    name = NULL,                            # Titel der Legende
+    values = c(
+      "Residuen" = "black",
+      "Theoretische Normalverteilung" = "red"
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(hjust = 1),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    legend.position = "bottom"                   # Legende unterhalb des Plots
+  ) +
+labs(
+  title = "Q-Q-Plot der Residuen",
+  x = "Theoretische Quantile der Normalverteilung",
+  y = "Empirische Quantile der Residuen"
+)
+
+
+ggsave("qq_plot.png", plot = qq_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+```
+
+
+```{r}
+Sandwich %>% group_by(Brot) %>% summarise(mean = mean(Ameisen),
+                                          median = median(Ameisen),
+                                          sd = sd(Ameisen),
+                                          IQR = IQR(Ameisen),
+                                          Range = max(Ameisen) - min(Ameisen),
+                                          n = n())
+
+Sandwich %>% group_by(Butter) %>% summarise(mean = mean(Ameisen),
+                                          median = median(Ameisen),
+                                          sd = sd(Ameisen),
+                                          IQR = IQR(Ameisen),
+                                          Range = max(Ameisen) - min(Ameisen),
+                                          n = n())
+
+Sandwich %>% group_by(Belag) %>% summarise(mean = mean(Ameisen),
+                                          median = median(Ameisen),
+                                          sd = sd(Ameisen),
+                                          IQR = IQR(Ameisen),
+                                          Range = max(Ameisen) - min(Ameisen),
+                                          n = n())
+```
+
+
+```{r}
+Sandwich_Long <- Sandwich %>%
+  pivot_longer(cols = c(Brot, Belag, Butter),
+               names_to = "Faktor", values_to = "Stufe")
+
+
+ggplot(Sandwich_Long, aes(x = interaction(Faktor, Stufe), y = Ameisen, color = Faktor)) +
+  geom_jitter(width = 0.15, size = 3, alpha = 0.8) +
+  stat_summary(fun = mean, geom = "point", shape = 18, size = 5, color = "black") +
+  labs(
+    title = "Vergleich der Streuung über alle Faktoren",
+    subtitle = "Punkte = Beobachtungen, Schwarz = Gruppenmittelwerte",
+    x = "Faktor und Stufe",
+    y = "Anzahl Ameisen"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+sand_long <- Sandwich_Long %>%
+  group_by(Faktor, Stufe) %>%
+  mutate(Ameisen_centered = Ameisen - mean(Ameisen)) %>%
+  ungroup()
+
+sand_long$Stufe <- 
+
+
+ggplot(sand_long, aes(x = Stufe, y = Ameisen_centered, fill = Faktor)) +
+  geom_boxplot(outlier.alpha = 0.6) +
+  labs(
+    title = "Varianzen ohne Lagenunterschiede",
+    x = "Faktorstufe",
+    y = "Ameisen (zentriert)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.8)
+  )
+
+
+
+sand_long <- sand_long %>% mutate(Stufe_nice_name = recode(Stufe,
+                                    "Vollkorn" = "V.Korn",
+                                    "Schinken-Essiggurken" = "Gurke Schinken",
+                                    "nein"  = "o.Butter",
+                                    "ja" = "Butter",
+                                    "Roggen" = "Roggen",
+                                    "Erdnussbutter" = "E.Butter",
+                                    "Weiß" = "Weiß",
+                                    "Hefe-Brotaufstrich" = "Hefe-Aufstrich"))
+violin_plot <- ggplot(sand_long, aes(x = Stufe_nice_name, y = Ameisen, fill = Faktor)) +
+                geom_violin(trim = FALSE, alpha = 0.5) +
+                geom_boxplot(width = 0.12, outlier.alpha = 0.5, color = "black") +
+                  labs(
+                  title = "Zentrierte Verteilungen der Faktorstufen",
+                  x = "",
+                  y = "# Ameisen zentriert"
+                ) +
+                theme_minimal(base_size = 13) +
+                theme(
+                  axis.text.x = element_text(angle = 30, hjust = 1),
+                  panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+                  plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)                )
+
+ggsave("violin_plot.png", plot = violin_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+violin_plot
+
+library(car)
+
+# Brot
+levene_brot <- leveneTest(Ameisen ~ Brot, data = Sandwich)
+
+# Belag
+levene_belag <- leveneTest(Ameisen ~ Belag, data = Sandwich)
+
+# Butter
+levene_butter <- leveneTest(Ameisen ~ Butter, data = Sandwich)
+
+levene_brot
+levene_belag
+levene_butter
+```
+
+
+```{r}
+shapiro.test(Sandwich$Ameisen)
+```
+
+
+
+```{r}
+lm_base_model <- lm(Ameisen ~ Brot + Belag + Butter, data = Sandwich)
+
+# Koeffizienten und Standardfehler
+coefs <- coef(lm_base_model)
+ses   <- sqrt(diag(vcov(lm_base_model)))
+
+# Tabellieren (nur Base R)
+tab <- data.frame(
+  term = names(coefs),
+  estimate = as.numeric(coefs),
+  se = as.numeric(ses),
+  stringsAsFactors = FALSE
+)
+
+# 95%-Konfidenzintervalle
+tab$lower <- tab$estimate - 1.96 * tab$se
+tab$upper <- tab$estimate + 1.96 * tab$se
+
+# Interzept raus
+tab <- tab[tab$term != "(Intercept)", ]
+
+# Hilfsfunktion: Faktorname + Stufe aus dem Term extrahieren
+# (angenommen: Kontraste sind die Standards -> Namen wie "BrotMehrkorn", "BelagErdnussbutter", "Butternein")
+split_factor_level <- function(x) {
+  # Welche der drei Faktoren steckt drin?
+  if (startsWith(x, "Brot"))  return(c("Brot",  sub("^Brot",  "", x)))
+  if (startsWith(x, "Belag")) return(c("Belag", sub("^Belag", "", x)))
+  if (startsWith(x, "Butter"))return(c("Butter",sub("^Butter","", x)))
+  return(c(NA_character_, x))
+}
+
+tmp <- t(vapply(tab$term, split_factor_level, FUN.VALUE = character(2)))
+tab$Faktor <- tmp[,1]
+tab$Stufe  <- tmp[,2]
+
+# Nur die drei gewünschten Faktoren behalten (falls im Modell mehr steckt)
+tab <- tab[tab$Faktor %in% c("Brot","Belag","Butter"), ]
+
+# Für hübsche Achsenbeschriftung
+tab$Faktor <- factor(tab$Faktor, levels = c("Brot","Belag","Butter"))
+
+
+ggplot(tab, aes(x = estimate, y = Stufe)) +
+  geom_vline(xintercept = 0, linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(xmin = lower, xmax = upper), width = 0.2) +
+  geom_point(size = 2.5) +
+  facet_grid(Faktor ~ ., scales = "free_y", space = "free_y") +
+  labs(
+    title = "Effektschätzer (Differenz zur Referenz) mit 95%-Konfidenzintervallen",
+    x = "Schätzer (β)",
+    y = "Stufe"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    strip.text.y = element_text(face = "bold")
+  )
+```
+
+```{r}
+lm_base_model <- lm(Ameisen ~ Brot + Belag + Butter, data = Sandwich)
+
+# ---------- Hilfsfunktionen ----------
+
+# partielle eta^2 je Faktor aus einer ANOVA-Tabelle berechnen
+eta_p2_from_anova <- function(lm_fit) {
+  tab <- anova(lm_fit)                 # DataFrame: Rownames = Faktoren, letzte Zeile = Residuals
+  ss_err <- tab["Residuals", "Sum Sq"] # Fehler-SS
+  fac_rows <- setdiff(rownames(tab), "Residuals")
+  eta <- sapply(fac_rows, function(f)
+    tab[f, "Sum Sq"] / (tab[f, "Sum Sq"] + ss_err)
+  )
+  data.frame(Faktor = fac_rows, eta_p2 = as.numeric(eta), row.names = NULL)
+}
+
+# Bootstrap-CIs für partielle eta^2 je Faktor (nur Base R)
+eta_p2_boot <- function(formula, data, B = 1000, seed = 123) {
+  set.seed(seed)
+  n <- nrow(data)
+  # Namen der Faktoren aus Originalfit
+  lm0 <- lm(formula, data = data)
+  fac_names <- eta_p2_from_anova(lm0)$Faktor
+  mat <- matrix(NA_real_, nrow = B, ncol = length(fac_names))
+  colnames(mat) <- fac_names
+  for (b in 1:B) {
+    idx <- sample.int(n, n, replace = TRUE)  # Resampling der Zeilen
+    fitb <- lm(formula, data = data[idx, , drop = FALSE])
+    eb <- eta_p2_from_anova(fitb)
+    # auf gemeinsame Reihenfolge mappen
+    mat[b, ] <- eb$eta_p2[match(fac_names, eb$Faktor)]
+  }
+  # Perzentil-CIs
+  ci <- t(apply(mat, 2, function(x) quantile(x, c(0.025, 0.975), na.rm = TRUE)))
+  data.frame(Faktor = fac_names,
+             lower = ci[,1],
+             upper = ci[,2],
+             row.names = NULL)
+}
+
+# ---------- Schätzung + CIs berechnen ----------
+
+eta_point <- eta_p2_from_anova(lm_base_model)                    # Punktschätzer
+eta_ci    <- eta_p2_boot(Ameisen ~ Brot + Belag + Butter,
+                         data = Sandwich, B = 2000, seed = 42)   # 95%-CI via Bootstrap
+
+plot_df <- merge(eta_point, eta_ci, by = "Faktor")
+
+# Faktor-Reihenfolge (optional hübsch)
+plot_df$Faktor <- factor(plot_df$Faktor, levels = c("Brot", "Belag", "Butter"))
+
+# ---------- Plot (ggplot2) ----------
+
+ggplot(plot_df, aes(x = Faktor, y = eta_p2)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.15) +
+  scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
+  labs(
+    title = "Faktoreffekte (partielles Eta-Quadrat) mit 95%-Konfidenzintervallen",
+    x = NULL,
+    y = expression(partielles~eta^2)
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+
+
+```{r}
+# interaction_model <- (aov(Ameisen ~ Brot + Belag + Butter + Brot*Butter*Belag, data = Sandwich))
+# 
+# assumption_check_im <- data.frame(res = resid(interaction_model), fit = fitted(interaction_model))
+# 
+# 
+# ggplot(assumption_check_im, aes(x = fit, y = res)) +
+#   geom_point(alpha = 0.7) +
+#   geom_hline(yintercept = 0, color = "red", linewidth = 0.8) +
+#   theme_minimal() +
+#   labs(
+#     title = paste("Residuen vs. vorhergesagte Werte",round(sum(assumption_check_im$res^2))),
+#     x = "Vorhergesagte Werte",
+#     y = "Residuen"
+#   )
+# 
+# ggplot(assumption_check_im, aes(sample = res)) +
+#   stat_qq() +
+#   stat_qq_line(color = "red") +
+#   theme_minimal() +
+#   labs(title = "Q-Q-Plot der Residuen", x = "Theoretische Quantile", y = "Beobachtete Quantile")
+
+
+```
+
+
+
+```{r}
+faktoren <- c("Brot", "Belag", "Butter")   # alle Faktor-Spalten
+for (f in faktoren) {
+  p <- ggplot(Sandwich, aes_string(x = f, y = "Ameisen")) +
+    geom_boxplot() +
+    labs(title = paste("Anzahl angelockter Ameisen nach", f)) +
+    theme_minimal() +
+    theme(panel.border = element_rect(colour = "black", fill = NA, linewidth = 1))
+  print(p)
+}
+
+```
+
+
+
+```{r}
+
+ggplot(Sandwich, aes(x = Brot, y = Ameisen, fill = Brot)) +
+  geom_boxplot() +
+  labs(title = "Anzahl angelockter Ameisen nach Brotsorte",
+       x = "Brotsorte",
+       y = "Anzahl Ameisen") +
+  theme_minimal()+theme(panel.border = element_rect(colour = "black", fill = NA, linewidth = 1))
+```
+
+```{r}
+ggplot(Sandwich, aes(x = Belag, y = Ameisen, fill = Belag)) +
+  geom_boxplot() +
+  labs(title = "Anzahl angelockter Ameisen nach Belag",
+       x = "Brotsorte",
+       y = "Anzahl Ameisen") +
+  theme_minimal()+theme(panel.border = element_rect(colour = "black", fill = NA, linewidth = 1))
+```
+
+```{r}
+ggplot(Sandwich, aes(x = Butter, y = Ameisen, fill = Butter)) +
+  geom_boxplot() +
+  labs(title = "Anzahl angelockter Ameisen nach Butter [ja/nein]",
+       x = "Butter",
+       y = "Anzahl Ameisen") +
+  theme_minimal()+theme(panel.border = element_rect(colour = "black", fill = NA, linewidth = 1))
+```
+
+
+  
+```{r}
+TukeyHSD(base_model, "Belag")
+```
+
+
+
+```{r}
+TukeyHSD(base_model, "Brot")
+```
+
+
+
+```{r}
+TukeyHSD(base_model, "Butter")
+```
+
+
+
+```{r}
+TukeyHSD(base_model)
+```
+
+
+
+```{r}
+base_model <- aov(Ameisen ~ Brot + Belag + Butter, data = Sandwich)
+
+# Tukey-Paarvergleiche
+tk <- TukeyHSD(base_model)
+
+# In einen Data Frame verwandeln (für alle Faktoren)
+df_list <- lapply(names(tk), function(f){
+  d <- as.data.frame(tk[[f]])
+  d$contrast <- rownames(d)
+  d$factor   <- f
+  rownames(d) <- NULL
+  # Spaltennamen säubern (p adj -> p_adj)
+  names(d) <- sub("^p adj$", "p_adj", names(d))
+  d
+})
+tk_df <- do.call(rbind, df_list)
+
+# Optional: Signifikanzflag (für Farbe)
+tk_df$sig <- tk_df$p_adj < 0.05
+
+# Kontraste je Faktor sortieren (optisch schöner)
+# -> Reihenfolge nach Effektgröße (|diff|) pro Faktor
+tk_df$contrast <- with(tk_df, reorder(contrast, abs(diff)))
+
+library(ggplot2)
+
+ggplot(tk_df, aes(x = diff, y = contrast, color = sig)) +
+  geom_vline(xintercept = 0, linewidth = 0.7, linetype = 2) +
+  geom_errorbarh(aes(xmin = lwr, xmax = upr), height = 0) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ factor, scales = "free_y") +
+  scale_color_manual(values = c("FALSE" = "grey30", "TRUE" = "black"),
+                     breaks = c(TRUE, FALSE),
+                     labels = c("p < 0.05", "n. s."),
+                     name = NULL) +
+  labs(
+    title = "Tukey-Paarvergleiche: Schätzer und 95%-Konfidenzintervalle",
+    x = "Differenz der Mittelwerte (Kontrast)",
+    y = "Paarvergleich"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "top",
+    axis.text.y = element_text(angle = 45, hjust = 1),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.8)
+  )
+
+
+tk_df$label <- with(tk_df, paste(factor, contrast, sep = ": "))
+# Für eine sinnvolle Reihenfolge nach absoluter Effektgröße
+tk_df$label <- with(tk_df, reorder(label, abs(diff)))
+
+library(ggplot2)
+
+tk_df$contrast <- c("M.Korn-Weiß","V.Korn-Weiß","Roggen-Weiß","V.Korn-M.Korn","Roggen-M.Korn","Roggen-V.Korn","E.Butter-Gurke Schinken","Hefe-Gurke Schinken","Hefe-E.Butter","Butter-o.Butter")
+
+tukey_plot <- ggplot(tk_df, aes(x = diff, y = contrast, color = factor)) +
+              geom_vline(xintercept = 0, linewidth = 0.7, linetype = 2) +
+              geom_errorbarh(aes(xmin = lwr, xmax = upr), height = 0) +
+              geom_point(size = 2.5) +
+              scale_color_manual(values = c("FALSE" = "Blue", "TRUE" = "black"),
+                     breaks = c(TRUE, FALSE),
+                     labels = c("p < 0.05", "n. s."),
+                     name = NULL) +
+              labs(
+              title = "Tukey-Paarvergleiche",
+              subtitle = "Schätzer und 95%-Konfidenzintervalle",
+              x = "Differenz der Mittelwerte (Kontrast)",
+              y = "Paare der Faktorstufen"
+              ) +
+              theme_minimal(base_size = 13) +
+              theme(
+              legend.position = "top",
+              axis.text.y = element_text(angle = 30, hjust = 1),
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+              plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+              )
+
+# Falls die Spalte wirklich "factor" heißt, besser umbenennen, um Verwirrung zu vermeiden:
+# tk_df$Factor <- tk_df$factor
+
+tukey_plot <- ggplot(tk_df, aes(x = diff, y = contrast, color = factor)) +
+  geom_vline(xintercept = 0, linewidth = 0.7, linetype = 2) +
+  # Whisker durch height > 0
+  geom_errorbarh(
+    aes(xmin = lwr, xmax = upr),  # sig = (p < 0.05) als TRUE/FALSE
+    height = 0.6, size = 0.7
+  ) +
+  geom_point(size = 2.8) +
+  # Farben für Faktoren
+  scale_color_brewer(palette = "Dark2", name = "Faktor") +
+  # Legenden für Signifikanz
+  # scale_shape_manual(
+  #   values = c(`TRUE` = 19, `FALSE` = 21),
+  #   labels = c(`TRUE` = "p < 0.05", `FALSE` = "n. s."),
+  #   name = NULL
+  # ) +
+  # scale_linetype_manual(
+  #   values = c(`TRUE` = "solid", `FALSE` = "dotted"),
+  #   labels = c(`TRUE` = "p < 0.05", `FALSE` = "n. s."),
+  #   name = NULL
+  # ) +
+  labs(
+    title = "Tukey-Paarvergleiche",
+    subtitle = "Schätzer und 95%-Konfidenzintervalle",
+    x = "Differenz der Mittelwerte (Kontrast)",
+    y = ""
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "top",
+    axis.text.y = element_text(angle = 25, hjust = 1),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  ) +
+  guides(
+    color = guide_legend(order = 1),
+    shape = guide_legend(order = 2),
+    linetype = guide_legend(order = 3)
+  )
+
+farben <- c(
+    "Brot"   = "#00BA38",   # grün
+    "Belag"  = "#F8766D",   # rot
+    "Butter" = "#619CFF"    # blau
+)
+
+tukey_plot <- ggplot(tk_df, aes(x = diff, y = contrast, color = factor)) +
+    geom_vline(xintercept = 0, linewidth = 0.7, linetype = 2) +
+    geom_errorbarh(aes(xmin = lwr, xmax = upr), height = 0.6) +
+    geom_point(size = 2.5) +
+    scale_color_manual(values = farben, name = "Faktor") +
+    labs(
+        title = "Tukey-Paarvergleiche",
+        subtitle = "Schätzer und 95%-Konfidenzintervalle",
+        x = "Differenz der Mittelwerte (Kontrast)",
+        y = NULL
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(
+        legend.position = "top",
+        axis.text.y = element_text(angle = 25, hjust = 1),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+        plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+    )
+
+
+ggsave("tukey_plot.png", plot = tukey_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+tukey_plot
+```
+
+
+
+```{r}
+# Pakete
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(tidyr)
+
+# ======= PARAMETER =======
+# Hier den Faktor wählen: "Brot", "Belag" oder "Butter"
+fac <- "Belag"     # <- nach Bedarf ändern
+width_right <- 0.8 # Breite der kleinen Dichteformen
+width_left  <- 1.6 # Breite der großen Gesamtdichte links
+
+# ======= DATENFRAME =======
+# Falls dein Frame anders heißt, hier ersetzen:
+df <- Sandwich
+
+# ======= GESAMTDICHTE (links) =======
+d_all <- density(df$Ameisen)
+all_df <- tibble(y = d_all$x, dens = d_all$y)
+
+# Polygon für die linke (gedrehte) Gesamtdichte schließen
+poly_all <- bind_rows(
+  all_df |> transmute(x = -dens * width_left, y),
+  all_df |> arrange(desc(y)) |> transmute(x = 0, y)
+) |> mutate(group = "ALL")
+
+# ======= BEDINGTE DICHTEN je Faktorstufe =======
+levs <- levels(df[[fac]])
+# Dichten
+dens_list <- map_dfr(levs, function(lv){
+  d <- density(df$Ameisen[df[[fac]] == lv])
+  tibble(level = lv, y = d$x, dens = d$y)
+})
+
+# Skaliere auf eine einheitliche Breite nach rechts
+max_dens <- max(dens_list$dens)
+dens_list <- dens_list |>
+  mutate(pos = as.numeric(factor(level, levels = levs)),
+         xcurve = pos + (dens / max_dens) * width_right)
+
+# Baue geschlossene Polygone (Kurve + Baseline am pos)
+poly_groups <- dens_list |>
+  group_by(level, pos) |>
+  arrange(y, .by_group = TRUE) |>
+  summarise(
+    x = list(c(xcurve, rev(rep(first(pos), n())))),
+    y = list(c(y, rev(y))),
+    .groups = "drop"
+  ) |>
+  unnest(c(x, y))
+
+# ======= MITTELWERTE & SD je Stufe =======
+summ <- df |>
+  group_by(level = .data[[fac]]) |>
+  summarise(mu = mean(Ameisen), sd = sd(Ameisen), .groups = "drop") |>
+  mutate(pos = as.numeric(factor(level, levels = levs)))
+
+# ======= PLOT =======
+ggplot() +
+  # Linke Gesamtdichte
+  geom_polygon(data = poly_all,
+               aes(x = x, y = y),
+               fill = "orange", alpha = 0.75, color = NA) +
+
+  # Vertikale Hilfslinien pro Stufe
+  geom_vline(xintercept = seq_along(levs), linetype = 3, linewidth = 0.3) +
+
+  # Bedingte Dichtepolygone (rechts)
+  geom_polygon(data = poly_groups,
+               aes(x = x, y = y, group = level, fill = level),
+               alpha = 0.9, color = "black", linewidth = 0.2) +
+
+  # Mittelwerte (Punkte) und SD als vertikale Segmente
+  geom_segment(data = summ,
+               aes(x = pos, xend = pos, y = pmax(mu - sd, min(df$Ameisen)),
+                   yend = pmin(mu + sd, max(df$Ameisen))),
+               linewidth = 0.6) +
+  geom_point(data = summ, aes(x = pos, y = mu),
+             size = 2, color = "black") +
+
+  # Achsen & Labels
+  scale_x_continuous(
+    breaks = seq_along(levs),
+    labels = levs,
+    expand = expansion(mult = c(0.15, 0.05)) # Platz links für die große Dichte
+  ) +
+  scale_fill_brewer(palette = "Blues") +
+  labs(
+    x = fac, y = "Ameisen",
+    title = "ANOVA-Illustration: Gesamtdichte und Y|X-Dichten",
+    subtitle = paste0("X = ", fac, "  •  Punkte = Mittelwerte, Segmente = ±1 SD")
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "none",
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+
+

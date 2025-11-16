@@ -1,0 +1,145 @@
+```{r}
+library("readr")
+Aspirin <- read_delim("Aspirin.csv", 
+    delim = ";", escape_double = FALSE, trim_ws = TRUE)
+```
+
+```{r}
+Aspirin
+
+
+aspirin <- read.csv("Aspirin.csv", sep = ";", header = TRUE)
+aspirin
+```
+
+```{r}
+summary(aspirin)
+```
+
+
+
+```{r}
+table(aspirin$Group)
+prop.table(table(aspirin$Group))
+```
+
+```{r}
+table(aspirin$Heart)
+prop.table(table(aspirin$Heart))
+```
+```{r}
+tab <- table(aspirin$Group, aspirin$Heart)
+tab
+prop.table(tab, margin = 1)
+
+
+
+fisher.test(tab)
+chisq.test(tab, correct = FALSE)
+```
+
+```{r}
+df <- as.data.frame(tab)
+
+ggplot(df, aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(x = "Gruppe", y = "Anteil", fill = "Herzinfarkt") +
+  theme_minimal()
+```
+
+```{r}
+rate <- prop.table(tab, 1)[, "Yes"]
+
+# ggplot(rate, aes(x = ))
+
+barplot(rate, ylim = c(0, max(rate)*1.2),
+        main = "Herzinfarktrate nach Gruppe",
+        ylab = "Rate",
+        col = c("steelblue", "firebrick"))
+```
+
+```{r}
+library(epiR)
+res <- epi.2by2(tab, method = "cohort.count")
+
+forestplot::forestplot(
+  labeltext = c("Risk Ratio", "Odds Ratio"),
+  mean = c(res$massoc$RR.crude[1], res$massoc$OR.crude[1]),
+  lower = c(res$massoc$RR.crude[2], res$massoc$OR.crude[2]),
+  upper = c(res$massoc$RR.crude[3], res$massoc$OR.crude[3])
+)
+
+epi.2by2(tab,
+         method = "cohort.count",
+         conf.level = 0.95)
+
+```
+
+```{r}
+df <- as.data.frame(tab)
+
+ggplot(df, aes(Var1, Var2, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), color = "white") +
+  scale_fill_gradient(low = "steelblue", high = "red") +
+  labs(x = "Gruppe", y = "Herzinfarkt") +
+  theme_minimal()
+```
+
+```{r}
+library(DiagrammeR)
+
+grViz("
+digraph tree {
+  node [shape = box, style = filled, fillcolor = lightblue]
+
+  Start -> Aspirin
+  Start -> Placebo
+
+  Aspirin -> Infarkt_A
+  Aspirin -> Kein_Infarkt_A
+
+  Placebo -> Infarkt_P
+  Placebo -> Kein_Infarkt_P
+}
+")
+```
+
+```{r}
+a <- tab[1, 2]  # Exponiert & Ereignis
+b <- tab[1, 1]  # Exponiert & kein Ereignis
+c <- tab[2, 2]  # Kontrolle & Ereignis
+d <- tab[2, 1]  # Kontrolle & kein Ereignis
+
+# Risiken
+p1 <- a / (a + b)
+p0 <- c / (c + d)
+
+# Risk Ratio
+RR <- p1 / p0
+
+# Odds
+odds1 <- a / b
+odds0 <- c / d
+
+# Odds Ratio
+OR <- (a * d) / (b * c)
+# odds1/odds0
+
+
+RR
+OR
+```
+
+
+```{r}
+epi.2by2(tab,
+         method = "cohort.count",
+         conf.level = 0.95)
+```
+
+```{r}
+fisher.test(tab[, c("Yes", "No")], alternative = "less")
+```
+
+

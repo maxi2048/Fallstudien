@@ -1,0 +1,1170 @@
+---
+title: "Bericht 1 Fallstudien"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+date: "2025-10-17"
+---
+
+
+```{r, include=FALSE}
+library("dplyr")
+library("ggplot2")
+library("ineq")
+library("corrplot")
+library("WDI")
+library("rnaturalearth")
+library("sf")
+library("dplyr")
+library("ggrepel")
+library("forcats")
+library("DT")
+library("viridis")
+
+df <- read.csv2(
+  file = "C:\\Users\\maxim\\Desktop\\Fallstudien\\FS1\\Data\\Happiness.csv",
+  na.strings = c("", "NA"),
+  fileEncoding = "UTF-8",   
+  check.names = FALSE       
+) %>% filter(Year >= 2008)
+
+names(df) <- gsub(" ", "_", names(df))
+
+length(unique(df$Country_name))
+
+sum(is.na(df))
+(colSums(is.na(df)))
+
+na_count <- data.frame(
+  Spalte = names(df[df$Year > 2007,]),
+  Anzahl_NA = colSums(is.na(df[df$Year > 2007,]))
+)
+
+
+
+
+# Anzahl Länder die von 2008 bis 2018 Daten haben
+df %>%
+    filter(Year >= 2008, Year <= 2018) %>%          
+    group_by(Country_name) %>%                       
+    summarise(n_years = n_distinct(Year)) %>%        
+    filter(n_years == 11) %>%                        
+    summarise(n_countries = n())
+
+df %>%
+    filter(Year >= 2008, Year <= 2018) %>%           
+    group_by(Country_name) %>%                       
+    summarise(n_years = n_distinct(Year)) %>%        
+    filter(n_years == 10) %>%                        
+    summarise(n_countries = n())
+
+
+
+na_count <- na_count[order(na_count$Anzahl_NA, decreasing = TRUE), ]
+na_count$Spalte <- factor(na_count$Spalte, levels = na_count$Spalte)
+
+
+na_count$cumNA <- cumsum(na_count$Anzahl_NA) / sum(na_count$Anzahl_NA)
+
+
+na_plot <- ggplot(na_count, aes(x = Spalte, y = 1-cumNA, group = 1)) +
+  geom_line(color = "steelblue", size = 1) +
+  geom_point(size = 2, color = "darkblue") +
+  labs(
+    title = "Fehlende Werte pro Variable [Absteigend sortiert]",
+    x = "Variablen sortiert nach der Anzahl fehlender Werte",
+    y = "Relativer Beitrag zur kumulierten Gesamtzahl [%]"
+  ) +coord_cartesian(ylim = c(0,1))+
+  theme_minimal() + theme_minimal() + 
+    theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("na_plot.png", plot = na_plot, dpi = 600, width = 16, height = 9, units = "cm", bg = "white")  
+
+na_plot
+
+```
+
+```{r}
+library(ggplot2)
+
+# Sortierung und kumulierte Werte wie gehabt
+na_count <- na_count[order(na_count$Anzahl_NA, decreasing = TRUE), ]
+na_count$Spalte <- factor(na_count$Spalte, levels = na_count$Spalte)
+na_count$cumNA <- cumsum(na_count$Anzahl_NA) / sum(na_count$Anzahl_NA)
+
+# Punkt bei 1 hinzufügen
+na_count_ext <- rbind(
+  data.frame(Spalte = "Start", Anzahl_NA = 0, cumNA = 0),
+  na_count
+)
+
+# Scree-Plot-artige Darstellung
+na_plot <- ggplot(na_count_ext, aes(x = seq_along(Spalte) - 1, y = 100 * (1 - cumNA), group = 1)) +
+    geom_line(color = "steelblue", size = 1) +
+    geom_point(size = 2, color = "darkblue") +
+    scale_x_continuous(breaks = 0:26) +  # Zahlen von 0 bis 26
+    scale_y_continuous(limits = c(0, 100), labels = function(x) paste0(x, "%")) +
+    labs(
+        title = "Fehlende Werte pro Variable ",
+        x = "Variablenindex [Absteigend sortiert]",
+        y = "Beitrag zur kumulierten Gesamtzahl [%]"
+    ) +
+    theme_minimal() +
+    theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("na_plot.png", plot = na_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")  
+
+na_plot
+
+```
+
+
+```{r, include=FALSE}
+# Welche Länder haben den höchsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
+# als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung
+# mit dem Gesamtscore?
+
+
+
+
+means <- df %>% filter(Year > 2007) %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+# Durchschnitt über die Jahre 
+
+means
+
+worst <- means[order(means$Life_Ladder),][1:5,]
+
+best <- means[order(means$Life_Ladder, decreasing = TRUE),][1:5,]
+
+best_worst <- rbind(best, worst)
+
+
+
+```
+
+```{r}
+# Grafiken im Mittel
+
+best_worst$Country_name[best_worst$Country_name == "Central African Republic"] <- "C.A.R."
+
+
+mean_plot <- ggplot(best_worst, aes(x = reorder(Country_name, Life_Ladder),
+                       y = Life_Ladder,
+                       fill = Life_Ladder)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
+  geom_text(aes(label = round(Life_Ladder, 2)),                            
+            vjust = -0.3, size = 3.5) +
+  labs(x = "",
+       y = "Durchschnitt [Life Ladder Score]",
+       title = "Die 5 besten/schlechtesten Länder im Durchschnitt [Life Ladder]",
+       subtitle = "Von 2008 bis 2018") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(0,10)) + 
+    theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+
+ggsave("mean_plot.png", plot = mean_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+mean_plot
+```
+
+
+```{r}
+# Aufgabe 1)
+# Gesamtscore:
+# Welche Länder haben den h¨ochsten/niedrigsten Gesamtscore und eignen sich deswegen besonders
+# als neue Heimat bzw. sind eher auszuschließen? Welche Faktoren haben die st¨arkste Verbindung
+# mit dem Gesamtscore?
+```
+
+
+In der Abbildung sind die fünf Länder mit dem durchschnittlich besten und schlechtesten Wert abgebildet. Die Länder welche den höchsten durchschnittlichen Wert haben und sich damit am besten zum auswandern eignen sind die Niederlande mit einem durchschnittlichen Wert von ungefähr 7.47, die Schweiz mit einem Durchschnitt von 7.53, Norwegen und Finnland mit einem Wert von je 7.55 und Dänemark mit dem höchsten durchschnittlichen Wert von 7.69. Zu den Ländern mit dem schlechtesten durchschnittlichen Wert zählen Süd Sudan, Togo, die Zentralafrikanische Republik, Burundi sowie Ruanda. 
+Diese Reihenfolge basiert auf dem arithmetischen Mittel, dieses hat einen Bruchpunkt von 1 und reagiert damit im allgemeinen sensibel auf Ausreißer. Deswegen wird zum einen der Median bestimmt um die Robustheit dieser Ergebnisse zu überprüfen. 
+
+
+```{r, include=FALSE}
+med <- df %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), median, na.rm = TRUE))
+
+# Durchschnitt über die Jahre 
+
+med
+
+worst_med <- med[order(med$Life_Ladder),][1:5,]
+
+best_med <- med[order(med$Life_Ladder, decreasing = TRUE),][1:5,]
+
+best_worst_med <- rbind(best_med, worst_med)
+
+# Grafiken im Median
+
+```
+
+```{r}
+ggsave("median_plot.png", plot = median_plot, dpi = 600, width = 16, height = 9, units = "cm", bg = "white")
+median_plot <- ggplot(best_worst_med, aes(x = reorder(Country_name, Life_Ladder),
+                       y = Life_Ladder,
+                       fill = Life_Ladder)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
+  geom_text(aes(label = round(Life_Ladder, 2)),                            
+            vjust = -0.3, size = 3.5) +
+  labs(x = "",
+       y = "Life Ladder Score [Median]",
+       title = "Die 5 besten/schlechtesten Länder im Median [Life Ladder]") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1)) +   theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+median_plot
+```
+
+
+
+```{r}
+
+latest_data <- df %>% filter(Year == 2018) 
+
+latest_data_best <- latest_data[order(latest_data$Life_Ladder),][1:5,]
+
+latest_data_worst <- latest_data[order(latest_data$Life_Ladder, decreasing = TRUE),][1:5,]
+
+best_worst_latest_data <- rbind(latest_data_best, latest_data_worst) %>% arrange(Life_Ladder)
+
+
+
+latest <- ggplot(best_worst_latest_data, aes(x = reorder(Country_name, Life_Ladder),
+                       y = Life_Ladder,
+                       fill = Life_Ladder)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "tomato", high = "darkgreen", guide = "none") +  
+  geom_text(aes(label = round(Life_Ladder, 2)),                            
+            vjust = -0.3, size = 3.5) +
+  labs(x = "",
+       y = "Life Ladder Score",
+       title = "Die 5 besten/schlechtesten im Jahr 2018 [Life Ladder]") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim = c(0,max(best_worst$Life_Ladder)*1.1)) +   theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+ggsave("latest_score.png", plot = latest, dpi = 600, width = 16, height = 9, units = "cm", bg = "white")
+latest
+```
+
+
+
+```{r, include=FALSE}
+# Zeitlicher Verlauf
+
+time <- df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda", "Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]
+
+time$Country_name[time$Country_name == "Central African Republic"] <- "Central African R."
+
+time$Country_name <- factor(
+  time$Country_name,
+  levels = c("Denmark", "Finland", "Norway", "Switzerland", "Netherlands",
+             "Rwanda", "Burundi", "Central African R.", "Togo", "South Sudan")
+)
+
+time$col <- ifelse(time$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),"Good_Score","Bad_Score")
+
+
+```
+
+
+```{r}
+timeplot <- ggplot(data = time[time$Year >= 2008,], aes(x = Year, y = Life_Ladder, group = Country_name, color = col)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Jahre [%y]", y = "Life Ladder Score [0-10]", title = "Zeitlicher Verlauf des Life Ladder Scores") +
+  scale_color_manual(values = c("Good_Score" = "darkgreen", "Bad_Score" = "tomato")) +
+  scale_x_continuous(
+    breaks = seq(2008, 2018, by = 2),                 # alle 2 Jahre anzeigen
+    labels = substring(seq(2008, 2018, by = 2), 3, 4) # nur letzte zwei Ziffern
+  ) +
+  facet_wrap(~Country_name, scales = "fixed", ncol = 5)+theme(legend.position = "none") +   theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+timeplot
+ggsave("time_plot.png", plot = timeplot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+```
+
+
+```{r, results='hold'}
+# Abweichungen innerhalb der guten Länder
+good_sd <- sd(df[df$Country_name %in% c("Netherlands", "Switzerland", "Norway", "Finland", "Denmark"),]$Life_Ladder)
+
+# Abweichung innerhalb der schlechten Länder
+bad_sd <- sd(df[df$Country_name %in% c("South Sudan", "Togo", "Central African Republic", "Burundi", "Rwanda"),]$Life_Ladder)
+
+paste("Die Standardabweichung innerhalb der Länder mit dem schlechtesten Score beträgt:",round(bad_sd,3), "Die Standardabweichung innerhalb der Länder mit dem besten Score beträgt:", round(good_sd,3))
+```
+
+
+```{r, include=FALSE}
+#### Kovarianzstruktur 
+
+cov(means[sapply(means, is.numeric)])
+
+# corrplot(cov(means[sapply(means, is.numeric)]), method = "color", type = "upper")
+
+num_df <- means[sapply(means, is.numeric)]
+
+sum(is.na(num_df))
+
+num_cols <- df[sapply(df, is.numeric)]
+
+
+cor(num_cols, use = "pairwise.complete.obs")["Life_Ladder", ]
+
+cov_df <- as.data.frame(t(cor(num_cols, use = "pairwise.complete.obs")["Life_Ladder", ]))
+
+
+cor_df <- data.frame(
+  Variable = names(cov_df),
+  Correlation = as.numeric(cov_df)
+)
+
+feature_selection <- df %>% filter(Year > 2007) %>% select(- c("Most_people_can_be_trusted,_WVS_round_1981-1984", "Most_people_can_be_trusted,_Gallup", "Most_people_can_be_trusted,_WVS_round_1989-1993", "Most_people_can_be_trusted,_WVS_round_1999-2004", "Most_people_can_be_trusted,_WVS_round_1994-1998",
+"Most_people_can_be_trusted,_WVS_round_2005-2009", "GINI_index_(World_Bank_estimate)", "Most_people_can_be_trusted,_WVS_round_2010-2014"))                                  
+
+feature_selection_means <- feature_selection %>% filter(Year > 2007) %>% select(-Year) %>% group_by(Country_name) %>% summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+fs_num <- feature_selection_means[sapply(feature_selection_means, is.numeric)]
+
+fs_cov_df <- as.data.frame(t(cor(fs_num, use = "pairwise.complete.obs")["Life_Ladder", ]))
+
+fs_cor_df <- data.frame(
+  Variable = names(fs_cov_df),
+  Korrelation = as.numeric(fs_cov_df)
+)
+
+fs_cor_df$nice_name <- c("Life Ladder", "Log BIP pro Kopf", "Soziales Netzwerk", "Lebenserwartung", "Selbstbestimmung", "Großzügigkeit", "Korruption", "Positive Emotionen", "Negative Emotionen", "Vertrauen Regierung", "Demokratiequalität", "staat. Leistungen", "SD(Life Ladder) pro Land-Jahr", "sd/mean Life Ladder Land-Jahr", "Gini Index WB 00-16","Gini Index Einkommen (Gallup)")
+
+
+
+
+corplot <- ggplot(fs_cor_df, aes(x = reorder(nice_name, Korrelation), y = Korrelation, fill = Korrelation)) +
+  geom_bar(stat = "identity", na.rm = TRUE)  +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(title = "Korrelation mit Life Ladder",
+       x = "", y = "Korrelation [-1,1]") +
+  geom_text(aes(label = round(Korrelation, 2)), 
+            hjust = ifelse(fs_cor_df$Korrelation > 0, -0.1, 1.1), 
+            size = 3) +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 10),
+        plot.title = element_text(hjust = 0.5))+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )+scale_y_continuous(limits = c(-1, 1)*1.25) +
+coord_flip() 
+ggsave("cor_plot.png", plot = corplot, dpi = 600, width = 5.82, height = 3.51, units = "in", bg = "white")
+corplot
+
+```
+
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+# Gini
+
+df[df$Year == 2018,c("Country_name", "gini_of_household_income_reported_in_Gallup,_by_wp5-year")]
+
+gini_plot <- df %>% filter(Year == 2018)
+  select(Country_name, `gini_of_household_income_reported_in_Gallup,_by_wp5-year`) %>%
+  rename(Gini_Gallup = `gini_of_household_income_reported_in_Gallup,_by_wp5-year`) %>%
+  filter(!is.na(Gini_Gallup)) %>%
+  arrange(desc(Gini_Gallup))
+
+# gini_plot$name <- recode(gini_plot$Country_name,
+#   "Congo (Brazzaville)" = "Republic of the Congo",
+#   "Congo (Kinshasa)" = "Democratic Republic of the Congo",
+#   "Ivory Coast" = "Côte d’Ivoire",
+#   "Swaziland" = "Eswatini",
+#   "Hong Kong S.A.R. of China" = "Hong Kong",
+#   "Somaliland region" = "Somalia",
+#   "Palestinian Territories" = "Palestine",
+#   "Taiwan Province of China" = "Taiwan",
+#   "South Korea" = "Korea, Republic of",
+#   "North Cyprus" = "Cyprus",
+#   "Macedonia" = "North Macedonia",
+#   "Russia" = "Russian Federation",
+#   "Venezuela" = "Venezuela (Bolivarian Republic of)",
+#   "Syria" = "Syrian Arab Republic",
+#   "Iran" = "Iran (Islamic Republic of)",
+#   "Laos" = "Lao People's Democratic Republic",
+#   "Vietnam" = "Viet Nam",
+#   "Tanzania" = "United Republic of Tanzania",
+#   "Bolivia" = "Bolivia (Plurinational State of)",
+#   "Turkey" = "Türkiye",
+#   "Czech Republic" = "Czechia"
+# )
+
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# Länder verbinden (join anhand von Country_name)
+world_gini <- world %>%
+  left_join(gini_plot, by = c("name" = "Country_name"))
+
+
+
+world <- ne_countries(scale = "medium", returnclass = "sf") %>%
+  mutate(iso3 = iso_a3)
+
+world_gini <- world %>%
+  left_join(gini_plot, by = "iso3")
+
+
+gini_world <- ggplot(world_gini) +
+  geom_sf(aes(fill = Gini_Gallup), color = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey90") +
+  labs(
+    title = "Gini (Gallup) nach Land",
+    fill  = "Gini (Gallup)"
+  ) +
+  theme_void()+theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+
+ggsave("gini_world_plot.png", plot = gini_world, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+
+
+# Gini NA Analyse
+wdi_na <- sum(is.na(gini_data$SI.POV.GINI))/nrow(gini_data) #65% NA
+WBE_na <- sum(is.na(df[df$Year > 2007,]$`GINI_index_(World_Bank_estimate)`))/nrow(df[df$Year > 2007,])
+WBE_average <- sum(is.na(df[df$Year > 2007,]$`GINI_index_(World_Bank_estimate),_average_2000-16`))/nrow(df[df$Year > 2007,])
+HH_Gallup_na <- sum(is.na(df[df$Year > 2007,]$`gini_of_household_income_reported_in_Gallup,_by_wp5-year`))/nrow(df[df$Year > 2007,])
+WBE_average
+WBE_na
+HH_Gallup_na
+
+gallup_counts <- df %>%
+  filter(Year > 2007) %>%
+  group_by(Country_name) %>%
+  summarise(
+    total_years = n(),  # alle Jahre nach 2007
+    non_missing = sum(!is.na(`gini_of_household_income_reported_in_Gallup,_by_wp5-year`)),  # vorhandene Werte
+    missing = sum(is.na(`gini_of_household_income_reported_in_Gallup,_by_wp5-year`)),
+    share_available = non_missing / total_years
+  ) %>%
+  arrange(desc(non_missing))  # sortiere nach den meisten vorhandenen Einträgen
+
+# Die Top 10 Länder mit den meisten verfügbaren Gini-Werten (Gallup)
+top_gallup <- head(gallup_counts, 10)
+top_gallup
+
+
+ggplot(df[df$Year > 2007 & df$Country_name %in% c("Germany", "Denmark"),], aes(x = Year, y = `gini_of_household_income_reported_in_Gallup,_by_wp5-year`, color = Country_name)) + geom_line()
+
+
+
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+
+# -------------------------------
+# 1️⃣ Datenselektion für 2018
+# -------------------------------
+
+gini_plot <- df %>%
+  filter(Year == 2018) %>%
+  select(Country_name, `gini_of_household_income_reported_in_Gallup,_by_wp5-year`) %>%
+  rename(Gini_Gallup = `gini_of_household_income_reported_in_Gallup,_by_wp5-year`) %>%
+  filter(!is.na(Gini_Gallup)) %>%
+  arrange(desc(Gini_Gallup))
+
+# -------------------------------
+# 2️⃣ Länder auf ISO3 umcodieren
+# -------------------------------
+
+library(countrycode)
+
+gini_plot <- gini_plot %>%
+  mutate(
+    iso3 = countrycode(
+      Country_name, origin = "country.name", destination = "iso3c",
+      custom_match = c(
+        "Congo (Brazzaville)"            = "COG",
+        "Congo (Kinshasa)"               = "COD",
+        "Ivory Coast"                    = "CIV",
+        "Swaziland"                      = "SWZ",
+        "Eswatini"                       = "SWZ",
+        "Hong Kong S.A.R. of China"      = "HKG",
+        "Somaliland region"              = "SOM",
+        "Palestinian Territories"        = "PSE",
+        "Taiwan Province of China"       = "TWN",
+        "South Korea"                    = "KOR",
+        "North Cyprus"                   = "CYP",
+        "Macedonia"                      = "MKD",
+        "Russia"                         = "RUS",
+        "Venezuela"                      = "VEN",
+        "Syria"                          = "SYR",
+        "Iran"                           = "IRN",
+        "Laos"                           = "LAO",
+        "Vietnam"                        = "VNM",
+        "Tanzania"                       = "TZA",
+        "Bolivia"                        = "BOL",
+        "Turkey"                         = "TUR",
+        "Czech Republic"                 = "CZE",
+        "United States"                  = "USA"
+      )
+    )
+  )
+
+# -------------------------------
+# 3️⃣ Weltkarte laden & joinen
+# -------------------------------
+
+world <- ne_countries(scale = "medium", returnclass = "sf") %>%
+  mutate(iso3 = iso_a3)
+
+world_gini <- world %>%
+  left_join(gini_plot, by = "iso3")
+
+# -------------------------------
+# 4️⃣ Plot erstellen
+# -------------------------------
+
+gini_world <- ggplot(world_gini) +
+  geom_sf(aes(fill = Gini_Gallup), color = "white", linewidth = 0.1) +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey90") +
+  labs(
+    title = "Gini-Koeffizient (Gallup) nach Land – 2018",
+    fill  = "Gini (Gallup)"
+  ) +
+  theme_void() +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.title = element_text(hjust = 0.5, size = 13, face = "bold")
+  )
+
+# -------------------------------
+# 5️⃣ Grafik speichern
+# -------------------------------
+
+ggsave(
+  "gini_world_plot.png",
+  plot = gini_world,
+  dpi = 600,
+  width = 6,
+  height = 4,
+  units = "in",
+  bg = "white"
+)
+
+df%>%filter(Year == 2018, Country_name %in% c("South African Republic","South Sudan", "Togo", "Burundi", "Tanzania", "Netherlands", "Finland", "Switzerland", "Norway", "Denmark")) %>% select(Country_name, `gini_of_household_income_reported_in_Gallup,_by_wp5-year`)
+
+
+```
+
+
+```{r}
+# Fehlende Werte:
+# In einigen Bereichen ist der Datensatz nicht komplett. Wie kann das zustande kommen und wie
+# könnte man bei der Deskription darauf eingehen?
+
+```
+
+
+
+```{r}
+
+
+
+
+```
+
+```{r}
+# Da Paul gerne asiatisch isst, interessiert ihn besonders der Vergleich von Hong Kong, China und
+# Deutschland. Dieser sollte f¨ur ihn entsprechend optisch aufbereitet werden.
+
+hk_ger_ch <- df %>% filter(Year > 2007, Country_name %in% c("Germany","Hong Kong S.A.R. of China","China")) %>% 
+    mutate(Country_name = ifelse(Country_name == "Hong Kong S.A.R. of China", "Hongkong", Country_name))
+
+# Welchen Platz haben sie auf der Durchschnittsskala ? 
+ranks <- means %>% arrange(desc(Life_Ladder)) %>% mutate(Rank = row_number()) %>%
+  filter(Country_name %in% c("China", "Germany", "Hong Kong S.A.R. of China"))
+
+
+hk_ger_ch <- hk_ger_ch %>%
+  mutate(Country_name = factor(Country_name,
+                               levels = c("Germany", "Hongkong", "China")))
+
+pal <- c("Germany" = "#0072B2",
+         "Hongkong" = "#E69F00",
+         "China"    = "#E31A1C")
+
+years_breaks <- seq(2008, 2018, by = 2)
+years_labels <- substring(years_breaks, 3, 4)
+xlim_vec <- c(min(hk_ger_ch$Year, na.rm = TRUE), max(hk_ger_ch$Year, na.rm = TRUE))
+
+base_theme <- theme_minimal() +
+  theme(
+    axis.text = element_text(size = 9),
+    plot.title = element_text(hjust = 0.5),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    legend.position = "bottom"
+  )
+
+# 1) Life Ladder
+p1 <- ggplot(hk_ger_ch[hk_ger_ch$Year > 2007,], aes(x = Year, y = Life_Ladder, color = Country_name)) +
+  geom_line(size = 1.1) +
+  geom_point(size = 2, alpha = 0.8) +
+  scale_color_manual(values = pal) +
+  scale_x_continuous(breaks = years_breaks, labels = years_labels) +
+  coord_cartesian(xlim = c(2008, 2018)) +
+  labs(title = "Life Ladder", x = "Jahr [%y]", y = "Life Ladder", color = "Land") +
+  base_theme
+
+# 2) Log GDP per capita
+p2 <- ggplot(hk_ger_ch[hk_ger_ch$Year > 2007,], aes(x = Year, y = Log_GDP_per_capita, color = Country_name)) +
+  geom_line(size = 1.1) +
+  geom_point(size = 2, alpha = 0.8) +
+  scale_color_manual(values = pal) +
+  scale_x_continuous(breaks = years_breaks, labels = years_labels) +
+  coord_cartesian(xlim = c(2008, 2018)) +
+  labs(title = "Log. BIP pro Kopf", x = "Jahr [%y]", y = "Log GDP pro Kopf", color = "Land") +
+  base_theme
+
+# 3) Healthy life expectancy
+p3 <- ggplot(hk_ger_ch[hk_ger_ch$Year > 2007,], aes(x = Year, y = Healthy_life_expectancy_at_birth, color = Country_name))+
+  geom_line(size = 1.1) +
+  geom_point(size = 2, alpha = 0.8) +
+  scale_color_manual(values = pal) +
+  scale_x_continuous(breaks = years_breaks, labels = years_labels) +
+  coord_cartesian(xlim = c(2008, 2018)) +
+  labs(title = "Lebenserwartung", x = "Jahr [%y]", y = "Jahre", color = "Land") +
+  base_theme
+
+# 4) Democratic quality
+p4 <- ggplot(hk_ger_ch[hk_ger_ch$Year > 2007,], aes(x = Year, y = Democratic_Quality, color = Country_name)) +
+  geom_line(size = 1.1) +
+  geom_point(size = 2, alpha = 0.8) +
+  scale_color_manual(values = pal) +
+  scale_x_continuous(breaks = years_breaks, labels = years_labels) +
+  coord_cartesian(xlim = c(2008, 2018)) +
+  labs(title = "Demokratiequalität", x = "Jahr [%y]", y = "Index", color = "Land") +
+  base_theme
+
+
+
+developmentplot <- ggarrange(p1, p2, p3, p4,
+          ncol = 2, nrow = 2,
+          common.legend = TRUE, legend = "bottom")
+
+developmentplot
+
+
+ggsave("development_plot.png", plot = developmentplot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+```
+
+
+
+```{r}
+# Untersuchen Sie zus¨atzlich 3 weitere Aspekte Ihrer Wahl.
+# Aspekt 1 
+na_summary <- df %>% filter(Year > 2007) %>%
+  group_by(Country_name) %>%
+  summarise(
+    mean_LL = mean(Life_Ladder, na.rm = TRUE),
+    total_NA = sum(is.na(across(everything()))),
+    total_possible = n() * ncol(df),
+    NA_rate = total_NA / total_possible
+  ) %>%  mutate(Country_name = ifelse(Country_name == "Hong Kong S.A.R. of China", "Hongkong", Country_name))
+
+
+ggplot(na_summary, aes(x = mean_LL, y = NA_rate)) +
+  geom_point() +
+  geom_smooth(method = "lm",se = FALSE, color = "blue") +
+  labs(x = "Durchschnittlicher Log GDP per Capita [Kaufkraftbereinigte Dollar]",
+       y = "Anteil fehlender Werte",
+       title = "Zusammenhang zwischen Einkommen und fehlenden Daten") +
+  theme_minimal()
+
+highlight_colors <- c(
+  "Germany" = "#1b9e77",
+  "Hongkong" = "#d95f02",
+  "China" = "#7570b3",
+  "Finland" = "#e7298a",
+  "Afghanistan" = "#66a61e",
+  "Togo" = "#e6ab02",
+  "United States" = "#CC79AF",
+  "Rwanda" = "black"
+)
+
+highlight_countries <- names(highlight_colors)
+
+model1 <- lm(NA_rate ~ mean_LL, data = na_summary)
+
+coef(model1)
+
+g1 <- ggplot(na_summary, aes(x = mean_LL, y = NA_rate)) +
+    geom_point(aes(color = Country_name,
+                   size = Country_name %in% highlight_countries),
+               alpha = 0.8) +
+    scale_size_manual(values = c("TRUE" = 3.5, "FALSE" = 1.5), guide = "none") +
+    scale_color_manual(values = c(highlight_colors, rep("grey70", nrow(na_summary)))) +
+    geom_smooth(method = "lm", se = FALSE, color = "blue") +
+    labs(x = "Mean [Life Ladder]", y = "Quote Fehlender Werte [%]",
+         title = "",
+         subtitle = "",
+         color = NULL) +
+    theme_minimal() +
+  theme(
+    axis.text = element_text(size = 9),
+    plot.title = element_text(hjust = 0.5),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    legend.position = "bottom"
+  )+guides(color = guide_legend(override.aes = list(size = 5)))+
+  annotate("text",
+         x = Inf, y = Inf,
+         label = paste0("Steigung = ", round(coef(model1)[2], 3),
+                        "\nR² = ", round(summary(model1)$r.squared, 3)),
+         hjust = 1.1, vjust = 1.5,  # nach innen verschoben
+         size = 3.5, color = "blue")
+
+
+na_summary_gdp <- df %>%
+  group_by(Country_name) %>%
+  summarise(
+    mean_lGDP = mean(Log_GDP_per_capita, na.rm = TRUE),
+    total_NA = sum(is.na(across(everything()))),
+    total_possible = n() * ncol(df),
+    NA_rate = total_NA / total_possible
+  ) %>%  mutate(Country_name = ifelse(Country_name == "Hong Kong S.A.R. of China", "Hongkong", Country_name))
+
+
+model <- lm(NA_rate ~ mean_lGDP, data = na_summary_gdp)
+
+# Steigung ausgeben (optional zum Kontrollieren)
+coef(model)
+
+# Plot mit Textanmerkung
+g2 <- ggplot(na_summary_gdp, aes(x = mean_lGDP, y = NA_rate)) +
+  geom_point(aes(color = Country_name,
+                 size = Country_name %in% highlight_countries),
+             alpha = 0.8) +
+  scale_size_manual(values = c("TRUE" = 3.5, "FALSE" = 1.5), guide = "none") +
+  scale_color_manual(values = c(highlight_colors, rep("grey70", nrow(na_summary_gdp)))) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(x = "Mean [Log BIP pro Kopf]", y = "Quote Fehlender Werte [%]",
+       title = "", subtitle = "", color = NULL) +
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 9),
+    plot.title = element_text(hjust = 0.5),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    legend.position = "bottom"
+  ) +
+  guides(color = guide_legend(override.aes = list(size = 5))) +
+  # ➤ Annotation mit Steigung
+annotate("text",
+         x = Inf, y = Inf,
+         label = paste0("Steigung = ", round(coef(model)[2], 3),
+                        "\nR² = ", round(summary(model)$r.squared, 3)),
+         hjust = 1.1, vjust = 1.5,  # nach innen verschoben
+         size = 3.5, color = "blue")
+
+(g1 + g2) + plot_layout(guides = "collect")
+ggarrange(g1, g2, ncol=2, widths=c(1,1), hjust = -0.1, vjust = 1.1, legend = "bottom")
+
+combined <- ggarrange(
+  g1, g2,
+  ncol = 2,
+  widths = c(1, 1),
+  align = "hv",
+  common.legend = TRUE,   # 🔹 Gemeinsame Legende aktivieren
+  legend = "bottom"       # 🔹 Legende unter den Plots
+)
+
+combined
+
+# ggsave("scatter.png", plot = combined, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+final_plot <- annotate_figure(
+  combined,
+  top = text_grob(
+    "Zusammenhang fehlende Werte und Wohlbefinden/ Einkommen",
+    face = "bold",
+    size = 12,
+    hjust = .5,  # horizontal zentriert
+    vjust = 2.5   # Abstand nach oben
+  ),
+  bottom = text_grob(
+    "",
+    size = 9,
+    hjust = 0.5
+  )
+)
+
+final_plot
+
+ggsave("scatter.png", plot = final_plot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")
+
+```
+
+```{r}
+# Aspekt 2
+# Welche Länder haben die beste Entwicklung ? Größter Unterschied vom Anfang 2008 bis zum Ende 2018
+
+sel_vars <- c(
+  "Life_Ladder",
+  "Log_GDP_per_capita",
+  "Healthy_life_expectancy_at_birth",
+  "Social_support",
+  "Democratic_Quality"
+)
+
+ranked <- df %>% filter(Year > 2007) %>% 
+  select(Country_name, Year, all_of(sel_vars)) %>%
+  pivot_longer(-c(Country_name, Year),
+               names_to = "Variable", values_to = "Value") %>%
+  group_by(Variable, Year) %>%
+  mutate(Rank = rank(-Value, ties.method = "average", na.last = "keep")) %>%
+  ungroup()
+
+rank_change <- ranked %>%
+  group_by(Variable, Country_name) %>%
+  arrange(Year, .by_group = TRUE) %>%
+  summarise(
+    first_year = Year[which(!is.na(Rank))][1],
+    last_year  = Year[rev(which(!is.na(Rank)))][1],
+    start_rank = Rank[which(!is.na(Rank))][1],
+    end_rank   = Rank[rev(which(!is.na(Rank)))][1],
+    n_years_obs = sum(!is.na(Rank)),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    rank_change = start_rank - end_rank,    
+    period_years = last_year - first_year
+  )
+
+rank_summary <- rank_change %>%
+  group_by(Country_name) %>%
+  summarise(
+    total_improvement = sum(rank_change, na.rm = TRUE),
+    avg_improvement = mean(rank_change, na.rm = TRUE),
+    vars_considered = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_improvement))
+
+
+head(rank_change)     
+head(rank_summary)     
+
+
+```
+
+
+```{r}
+
+
+# Top N Länder nach Gesamtverbesserung (aus rank_summary)
+topN <- 6
+top_countries <- rank_summary %>%
+  slice_max(total_improvement, n = topN) %>%
+  pull(Country_name)
+
+# Per-Variable + Total in ein gemeinsames Long-Format bringen
+plot_df <- rank_change %>%
+  filter(Country_name %in% top_countries) %>%
+  select(Country_name, Variable, rank_change) %>%
+  bind_rows(
+    rank_summary %>%
+      filter(Country_name %in% top_countries) %>%
+      transmute(Country_name, Variable = "Total", rank_change = total_improvement)
+  ) %>%
+  left_join(rank_summary %>% select(Country_name, total_improvement),
+            by = "Country_name") %>%
+  mutate(
+    Country_name = fct_reorder(Country_name, total_improvement),
+    Variable = recode(Variable,
+      "Life_Ladder" = "Life Ladder",
+      "Log_GDP_per_capita" = "Log BIP pro Kopf",
+      "Social_support" = "Soziales Netzwerk",
+      "Healthy_life_expectancy_at_birth" = "Lebenserwartung",
+      "Democratic_Quality" = "Demokratiequalität",
+      "Total" = "Gesamtverbesserung"
+    ),
+    Variable = factor(Variable, levels = c("Life Ladder","Log BIP pro Kopf", "Soziales Netzwerk", "Lebenserwartung", "Demokratiequalität", "Gesamtverbesserung"))
+  ) %>%
+  select(-total_improvement)
+
+# Heatmap
+rankplot <- ggplot(plot_df, aes(x = Variable, y = Country_name, fill = rank_change)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(rank_change, 1)), size = 3) +
+  # scale_fill_gradient2(low = "#440154", mid = "#3e4988", high = "#35b779",
+                       # midpoint = 0, name = "Rang-\nänderung") +
+  scale_fill_viridis(option = "C", direction = 1, name = "Rangänderung")+
+  labs(title = "Änderung im Rang einer Variable und in Summe der Variablen",
+       x = "", y = "") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  guides(fill = guide_colorbar(direction = "vertical",
+                               barheight = unit(60, "pt"),
+                               barwidth  = unit(8,  "pt"))) +
+  scale_x_discrete(labels = function(x) str_replace_all(x, "_", "\n")) +
+  theme(axis.text.x = element_text(angle =20, vjust = 0.5)) +
+  scale_x_discrete(expand = c(0,0)) +
+  scale_y_discrete(expand = c(0,0)) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+ggsave("rank_plot.png", plot = rankplot, dpi = 600, width = 5.99, height = 4.05, units = "in", bg = "white")  
+
+rankplot
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+# Aspekt 3
+# Objektive Faktoren und Life Ladder
+
+objective_vars <- c(
+  "Log_GDP_per_capita",
+  "Healthy_life_expectancy_at_birth",
+  "Social_support",
+  "Democratic_Quality",
+  "Delivery_Quality"
+)
+
+# ==== 2) Daten für 2018 filtern ====
+df_2018 <- df %>%
+  filter(Year == 2018) %>%
+  select(Country_name, Life_Ladder, all_of(objective_vars))
+
+# ==== 3) Ränge je Variable berechnen (höherer Wert = besserer Rang) ====
+ranks_2018 <- df_2018 %>%
+  mutate(across(all_of(c("Life_Ladder", objective_vars)),
+                ~ rank(-., ties.method = "average", na.last = "keep"),
+                .names = "rank_{col}"))
+
+# ==== 4) Durchschnittsrang der „objektiven“ Variablen ====
+ranks_2018 <- ranks_2018 %>%
+  rowwise() %>%
+  mutate(
+    mean_rank_objective = mean(
+      c_across(all_of(paste0("rank_", objective_vars))), 
+      na.rm = TRUE
+    )
+  ) %>%
+  ungroup()
+
+# ==== 5) Top-5 Länder nach objektivem Durchschnittsrang ====
+top5_objective <- ranks_2018 %>%
+  arrange(mean_rank_objective) %>%
+  slice_head(n = 5) %>%
+  select(Country_name, mean_rank_objective, rank_Life_Ladder)
+
+top5_objective
+
+# ==== 6) Vergleich visualisieren ====
+ggplot(top5_objective,
+       aes(x = reorder(Country_name, -mean_rank_objective))) +
+  geom_col(aes(y = -mean_rank_objective, fill = "Objektive Faktoren"),
+           width = 0.4, position = position_nudge(x = -0.15)) +
+  geom_col(aes(y = -rank_Life_Ladder, fill = "Life Ladder"),
+           width = 0.4, position = position_nudge(x = 0.15)) +
+  coord_flip() +
+  scale_fill_manual(values = c("Objektive Faktoren" = "steelblue",
+                               "Life Ladder" = "darkorange")) +
+  labs(title = "Vergleich zwischen objektiven Faktoren und subjektivem Wohlbefinden (2018)",
+       x = "Land (Top 5 nach objektiven Variablen)",
+       y = "Rang (negativ dargestellt: oben = besser)",
+       fill = "") +
+  theme_minimal()
+
+
+DT::datatable(top5_objective)
+
+
+```
+
+```{r}
+
+objective_vars <- c(
+  "Log_GDP_per_capita",
+  "Healthy_life_expectancy_at_birth",
+  "Social_support",
+  "Democratic_Quality",
+  "Delivery_Quality"
+)
+
+df_2018 <- df %>%
+  filter(Year == 2018) %>%
+  select(Country_name, Life_Ladder, all_of(objective_vars))
+
+# --- Einzelränge pro Variable ---
+ranks_2018 <- df_2018 %>%
+  mutate(across(all_of(c("Life_Ladder", objective_vars)),
+                ~ rank(-., ties.method = "average", na.last = "keep"),
+                .names = "rank_{col}"))
+
+# --- Summe der objektiven Ränge pro Land ---
+ranks_2018 <- ranks_2018 %>%
+  rowwise() %>%
+  mutate(
+    sum_rank_objective = sum(
+      c_across(all_of(paste0("rank_", objective_vars))),
+      na.rm = TRUE
+    )
+  ) %>%
+  ungroup()
+
+# --- Jetzt erst den aggregierten Rang über ALLE Länder bilden ---
+ranks_2018 <- ranks_2018 %>%
+  mutate(
+    agg_rank_objective = rank(sum_rank_objective, ties.method = "average"),
+    diff_rank = rank_Life_Ladder - agg_rank_objective
+  )
+
+# --- Sortierung nach Über-/Unterperformance ---
+overperform_table <- ranks_2018 %>%
+  arrange(desc(diff_rank)) %>%
+  select(
+    Country_name,
+    rank_Life_Ladder,
+    agg_rank_objective,
+    diff_rank
+  )
+
+underperform_table <- ranks_2018 %>%
+  arrange(diff_rank) %>%
+  select(
+    Country_name,
+    rank_Life_Ladder,
+    agg_rank_objective,
+    diff_rank
+  )
+
+head(overperform_table, 10)
+head(underperform_table, 10)
+```
+```{r}
+# Anhang Tabellen etc.
+
+library(dplyr)
+
+# Basisdaten: nur Jahre 2008–2018
+base <- df %>%
+  filter(Year >= 2008, Year <= 2018)
+
+# 1️⃣ Mittelwert
+mean_tbl <- base %>%
+  group_by(Country_name) %>%
+  summarise(
+    mean_LL = mean(Life_Ladder, na.rm = TRUE),
+    sd_LL = sd(Life_Ladder, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+best_mean  <- mean_tbl %>% slice_max(mean_LL, n = 5, with_ties = FALSE)
+worst_mean <- mean_tbl %>% slice_min(mean_LL, n = 5, with_ties = FALSE)
+
+mean_table <- bind_rows(best_mean, worst_mean) %>%
+  mutate(Metrik = "Mittelwert") %>%
+  select(Country_name, Metrik, Wert = mean_LL, Standardabweichung = sd_LL)
+
+# 2️⃣ Median
+median_tbl <- base %>%
+  group_by(Country_name) %>%
+  summarise(
+    median_LL = median(Life_Ladder, na.rm = TRUE),
+    sd_LL = sd(Life_Ladder, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+best_median  <- median_tbl %>% slice_max(median_LL, n = 5, with_ties = FALSE)
+worst_median <- median_tbl %>% slice_min(median_LL, n = 5, with_ties = FALSE)
+
+median_table <- bind_rows(best_median, worst_median) %>%
+  mutate(Metrik = "Median") %>%
+  select(Country_name, Metrik, Wert = median_LL, Standardabweichung = sd_LL)
+
+# 3️⃣ Jahr 2018
+year2018_tbl <- df %>%
+  filter(Year == 2018) %>%
+  select(Country_name, Life_Ladder_2018 = Life_Ladder) %>%
+  left_join(
+    base %>%
+      group_by(Country_name) %>%
+      summarise(sd_LL = sd(Life_Ladder, na.rm = TRUE), .groups = "drop"),
+    by = "Country_name"
+  )
+
+best_2018  <- year2018_tbl %>% slice_max(Life_Ladder_2018, n = 5, with_ties = FALSE)
+worst_2018 <- year2018_tbl %>% slice_min(Life_Ladder_2018, n = 5, with_ties = FALSE)
+
+year2018_table <- bind_rows(best_2018, worst_2018) %>%
+  mutate(Metrik = "Wert 2018") %>%
+  select(Country_name, Metrik, Wert = Life_Ladder_2018, Standardabweichung = sd_LL)
+
+# 🔹 Ergebnis: drei Tabellen
+mean_table
+median_table
+year2018_table
+
+
+```
+
