@@ -1,0 +1,305 @@
+---
+title: "Project4_Petzel_Maximilian"
+output: html_document
+date: "2025-11-25"
+---
+
+```{r}
+
+
+Fifa$Height  <- round(as.numeric(sub("'.*", "", Fifa$Height)) * 30.48 + as.numeric(sub(".*'", "", Fifa$Height)) * 2.54)
+
+Fifa$Weight  <- round(as.numeric(sub("lbs", "", Fifa$Weight)) * 0.45359237)
+```
+
+```{r}
+# Feldspieler <- Fifa[Fifa$Position != "GK",]
+# 
+# imp_col_Feldspieler <- Feldspieler[, 
+#                                    !(names(Feldspieler) %in% 
+#                                      c("...1","X","ID","Name","Club","Nationality",
+#                                        "Contract.Valid.Until","Position",
+#                                        "GKHandling","GKKicking",
+#                                        "GKPositioning","GKReflexes", "GKDiving"))]
+
+
+# summary(lm(Overall ~., data = imp_col_Feldspieler))
+```
+
+```{r}
+library(glmnet)
+
+imp_col_Feldspieler <- na.omit(imp_col_Feldspieler)
+
+X <- model.matrix(Overall ~ ., imp_col_Feldspieler)[ , -1]
+y <- imp_col_Feldspieler$Overall
+
+cv_lasso <- cv.glmnet(X, y, alpha = 1)
+lasso_coef <- coef(cv_lasso, s = "lambda.min")
+
+important_vars <- rownames(lasso_coef)[as.numeric(lasso_coef) != 0]
+important_vars <- important_vars[important_vars != "(Intercept)"]
+
+important_vars
+
+lasso_coef_less <- coef(cv_lasso, s = "lambda.1se")
+
+important_vars_less <- rownames(lasso_coef_less)[as.numeric(lasso_coef_less) != 0]
+important_vars_less <- important_vars_less[important_vars_less != "(Intercept)"]
+
+important_vars_less
+
+```
+
+```{r}
+#Aufteilung nach Positionen 
+
+verteidigung <- c("RB", "LB", "RWB", "LWB", "CB", "RCB", "LCB")
+
+mittelfeld <- c("CM", "RCM", "LCM",
+                "CDM", "LDM", "RDM",
+                "CAM", "LAM", "RAM",
+                "RM", "LM")
+
+sturm <- c("ST", "LS", "RS", "CF",
+           "LW", "RW", "LF", "RF")
+
+torwart <- "GK"
+
+
+
+Fifa_Pos <- Fifa
+Fifa_Pos$Group <- ifelse(Fifa_Pos$Position %in% verteidigung, "Def",
+               ifelse(Fifa_Pos$Position %in% mittelfeld, "Mid",
+               ifelse(Fifa_Pos$Position %in% sturm, "Att", NA)))
+
+Fifa_Pos$...1 <- NULL
+
+Fifa_Pos <- Fifa_Pos[, !(names(Fifa_Pos) %in% 
+                                     c("...1","X","ID","Name","Club","Nationality",
+                                       "Contract.Valid.Until","Position", "Jersey.Number",
+                                       "GKHandling","GKKicking",
+                                       "GKPositioning","GKReflexes", "GKDiving"))]
+
+```
+
+
+```{r}
+
+library(glmnet)
+
+run_lasso <- function(df, label) {
+  df <- na.omit(df)
+  
+  # nur numerische Variablen
+  df_num <- df[ , sapply(df, is.numeric)]
+  
+  # konstante Variablen raus
+  konstante <- sapply(df_num, function(x) length(unique(x)) <= 1)
+  df_num <- df_num[ , !konstante]
+  
+  X <- model.matrix(Overall ~ ., df_num)[ , -1]
+  y <- df_num$Overall
+  
+  cvfit <- cv.glmnet(X, y, alpha = 1)
+  
+  coefs <- coef(cvfit, s = "lambda.1se")
+  
+  # In Dataframe umwandeln
+  df_coefs <- data.frame(
+    variable = rownames(coefs),
+    coef = as.numeric(coefs)
+  )
+  
+  # Intercept raus
+  df_coefs <- df_coefs[df_coefs$variable != "(Intercept)", ]
+  
+  # Nur Nicht-Null-Koeffizienten
+  df_nonzero <- df_coefs[df_coefs$coef != 0, ]
+  
+  # Sortieren nach absoluter Größe
+  df_nonzero <- df_nonzero[order(abs(df_nonzero$coef), decreasing = TRUE), ]
+  
+  # Ausgabe
+  cat("\n=====================\n")
+  cat("Top 10 Variablen für:", label, "\n")
+  cat("=====================\n")
+  print(df_nonzero[1:10, ])
+  
+  return(df_nonzero)
+}
+
+```
+
+```{r}
+Def <- subset(Fifa_Pos, Group == "Def")
+Mid <- subset(Fifa_Pos, Group == "Mid")
+Att <- subset(Fifa_Pos, Group == "Att")
+
+
+coef_def <- run_lasso(Def, "Verteidigung")
+coef_mid <- run_lasso(Mid, "Mittelfeld")
+coef_att <- run_lasso(Att, "Sturm")
+```
+
+```{r}
+library(ggplot2)
+
+top10_def <- head(coef_def, 10)  
+
+ggplot(top10_def,
+       aes(x = reorder(variable, abs(coef)),
+           y = abs(coef))) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 wichtige Variablen – Verteidigung",
+    x = "Attribut",
+    y = "|LASSO-Koeffizient|"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+top10_mid <- head(coef_mid, 10)  
+
+ggplot(top10_mid,
+       aes(x = reorder(variable, abs(coef)),
+           y = abs(coef))) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 wichtige Variablen – Mittelfeld",
+    x = "Attribut",
+    y = "|LASSO-Koeffizient|"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+top10_att <- head(coef_att, 10)  
+
+ggplot(top10_att,
+       aes(x = reorder(variable, abs(coef)),
+           y = abs(coef))) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 wichtige Variablen – Angriff",
+    x = "Attribut",
+    y = "|LASSO-Koeffizient|"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+reg_def <- lm(Overall ~., data = Def[, c("Overall", top10_def$variable)])
+summary(reg_def)
+
+
+```
+
+```{r}
+reg_mid <- lm(Overall ~., data = Mid[, c("Overall", top10_mid$variable)])
+summary(reg_mid)
+```
+
+```{r}
+reg_att <- lm(Overall ~., data = Att[, c("Overall", top10_att$variable)])
+summary(reg_att)
+```
+
+```{r}
+#Random Forrest Classifier | Mit Attributen Position vorhersagen
+library(randomForest)
+
+rf_data <- subset(Fifa_Pos, !is.na(Group))
+
+rf_data$Group <- factor(rf_data$Group)
+
+
+predictors <- setdiff(names(rf_data), c("Group", "Overall"))
+
+rf_data <- rf_data[, c("Group", predictors)]
+rf_data <- na.omit(rf_data)
+
+set.seed(123)
+
+n <- nrow(rf_data)
+train_idx <- sample(seq_len(n), size = floor(0.7 * n))
+
+train_dat <- rf_data[train_idx, ]
+test_dat  <- rf_data[-train_idx, ]
+
+
+rf_model <- randomForest(
+  Group ~ .,
+  data = train_dat,
+  ntree = 500,
+  mtry  = floor(sqrt(ncol(train_dat) - 1)), 
+  importance = TRUE
+)
+
+rf_model
+```
+
+```{r}
+pred_test <- predict(rf_model, newdata = test_dat)
+
+mean(pred_test == test_dat$Group)
+```
+
+```{r}
+# Konfusion Matirx 
+table(Predicted = pred_test, Actual = test_dat$Group)
+```
+
+```{r}
+importance(rf_model)
+
+```
+
+```{r}
+imp_df <- as.data.frame(importance(rf_model))
+
+imp_df 
+
+```
+
+```{r}
+library(dplyr)
+
+Top10_att <- imp_df %>%
+  arrange(desc(Att)) %>%
+  slice(1:10)
+
+Top10_def <- imp_df %>%
+  arrange(desc(Def)) %>%
+  slice(1:10)
+
+Top10_mid <- imp_df %>%
+  arrange(desc(Mid)) %>%
+  slice(1:10)
+```
+
+```{r}
+Top10_att
+```
+
+```{r}
+Top10_mid
+```
+
+```{r}
+Top10_def
+```
+
+
+
+
+```{r}
+#Mean Decrease Accuracy wie stark sinkt die Accuracy, wenn man Variable permmutiert
+#MEan Deacrease Gini für split wie gut trennt er KLassen  
+varImpPlot(rf_model, n.var = 10, main = "Wichtigste Attribute für Positionsvorhersage")
+```
+

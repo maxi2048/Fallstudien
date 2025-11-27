@@ -38,25 +38,6 @@ fisher.test(tab)
 chisq.test(tab, correct = FALSE)
 ```
 
-```{r}
-df <- as.data.frame(tab)
-
-ggplot(df, aes(x = Var1, y = Freq, fill = Var2)) +
-  geom_bar(stat = "identity", position = "fill") +
-  labs(x = "Gruppe", y = "Anteil", fill = "Herzinfarkt") +
-  theme_minimal()
-```
-
-```{r}
-rate <- prop.table(tab, 1)[, "Yes"]
-
-# ggplot(rate, aes(x = ))
-
-barplot(rate, ylim = c(0, max(rate)*1.2),
-        main = "Herzinfarktrate nach Gruppe",
-        ylab = "Rate",
-        col = c("steelblue", "firebrick"))
-```
 
 ```{r}
 library(epiR)
@@ -75,61 +56,7 @@ epi.2by2(tab,
 
 ```
 
-```{r}
-df <- as.data.frame(tab)
 
-ggplot(df, aes(Var1, Var2, fill = Freq)) +
-  geom_tile() +
-  geom_text(aes(label = Freq), color = "white") +
-  scale_fill_gradient(low = "steelblue", high = "red") +
-  labs(x = "Gruppe", y = "Herzinfarkt") +
-  theme_minimal()
-```
-
-```{r}
-library(DiagrammeR)
-
-grViz("
-digraph tree {
-  node [shape = box, style = filled, fillcolor = lightblue]
-
-  Start -> Aspirin
-  Start -> Placebo
-
-  Aspirin -> Infarkt_A
-  Aspirin -> Kein_Infarkt_A
-
-  Placebo -> Infarkt_P
-  Placebo -> Kein_Infarkt_P
-}
-")
-```
-
-```{r}
-a <- tab[1, 2]  # Exponiert & Ereignis
-b <- tab[1, 1]  # Exponiert & kein Ereignis
-c <- tab[2, 2]  # Kontrolle & Ereignis
-d <- tab[2, 1]  # Kontrolle & kein Ereignis
-
-# Risiken
-p1 <- a / (a + b)
-p0 <- c / (c + d)
-
-# Risk Ratio
-RR <- p1 / p0
-
-# Odds
-odds1 <- a / b
-odds0 <- c / d
-
-# Odds Ratio
-OR <- (a * d) / (b * c)
-# odds1/odds0
-
-
-RR
-OR
-```
 
 
 ```{r}
@@ -141,5 +68,126 @@ epi.2by2(tab,
 ```{r}
 fisher.test(tab[, c("Yes", "No")], alternative = "less")
 ```
+
+```{r}
+#Rauchen
+nrow(aspirin[aspirin$Smoke == "Yes",])
+
+
+
+
+```
+
+```{r}
+#Raucher/ Richtraucher
+Raucher <- aspirin[aspirin$Smoke == "Yes",]
+NichtRaucher <- aspirin[aspirin$Smoke == "No",]
+
+RaucherTab <- table(Raucher$Group, Raucher$Heart)
+
+NichtRaucherTab <- table(NichtRaucher$Group, NichtRaucher$Heart)
+
+chisq.test(RaucherTab, correct = FALSE)
+
+chisq.test(NichtRaucherTab, correct = FALSE)
+
+#Effekt bleibt für beide Gruppen
+```
+
+```{r}
+analyse_2x2 <- function(tab,
+                        treat_row,
+                        control_row,
+                        event_col,
+                        nonevent_col,
+                        conf.level = 0.95,
+                        correct.chisq = FALSE) {
+  
+  
+  tab <- as.matrix(tab)
+  
+  
+  a0 <- tab[treat_row, event_col]     
+  b0 <- tab[treat_row, nonevent_col] 
+  c0 <- tab[control_row, event_col]   
+  d0 <- tab[control_row, nonevent_col]
+  
+  original_tab <- matrix(c(a0, b0, c0, d0), nrow = 2, byrow = TRUE)
+  rownames(original_tab) <- c("Behandlung", "Kontrolle")
+  colnames(original_tab) <- c("Ereignis", "kein Ereignis")
+  
+    if (any(original_tab == 0)) {
+    tab2 <- original_tab + 0.5
+    correction <- "Haldane-Anscombe-Korrektur (0.5) wegen Nullzellen angewandt."
+  } else {
+    tab2 <- original_tab
+    correction <- "Keine Korrektur erforderlich."
+  }
+  
+  a <- tab2[1,1]; b <- tab2[1,2]
+  c <- tab2[2,1]; d <- tab2[2,2]
+  
+  n_treat   <- a + b
+  n_control <- c + d
+  
+  risk_treat   <- a / n_treat
+  risk_control <- c / n_control
+  
+  chisq_res <- suppressWarnings(chisq.test(original_tab, correct = correct.chisq))
+  
+  z <- qnorm(1 - (1 - conf.level) / 2)
+  
+  OR <- (a * d) / (b * c)
+  se_log_OR <- sqrt(1/a + 1/b + 1/c + 1/d)
+  CI_OR <- exp(log(OR) + c(-1, 1) * z * se_log_OR)
+  
+  RR <- risk_treat / risk_control
+  se_log_RR <- sqrt(1/a - 1/n_treat + 1/c - 1/n_control)
+  CI_RR <- exp(log(RR) + c(-1, 1) * z * se_log_RR)
+  
+  ARR <- risk_control - risk_treat
+  se_ARR <- sqrt(
+    risk_treat*(1-risk_treat)/n_treat +
+      risk_control*(1-risk_control)/n_control
+  )
+  CI_ARR <- ARR + c(-1, 1) * z * se_ARR
+  
+  NNT <- ifelse(ARR != 0, 1/ARR, NA)
+  
+  list(
+    verwendete_tabelle = original_tab,
+    definitionen = list(
+      behandlungszeile = treat_row,
+      kontrollzeile = control_row,
+      ereignisspalte = event_col,
+      keine_ereignisspalte = nonevent_col
+    ),
+    chisq_test = chisq_res,
+    odds_ratio = c(OR = OR, CI_lower = CI_OR[1], CI_upper = CI_OR[2]),
+    risk_ratio = c(RR = RR, CI_lower = CI_RR[1], CI_upper = CI_RR[2]),
+    risks = list(risk_treat = risk_treat,
+                 risk_control = risk_control),
+    absolute_risk_reduction = c(ARR = ARR,
+                                CI_lower = CI_ARR[1],
+                                CI_upper = CI_ARR[2]),
+    nnt = NNT,
+    korrektur = correction
+  )
+}
+```
+
+```{r}
+aspirin
+tab
+ 
+Ergebnisse_Full <- analyse_2x2(tab, conf.level = 1-(0.05/3), "Aspirin", "Placebo", "Yes", "No")
+
+Ergebnisse_Raucher <- analyse_2x2(RaucherTab, conf.level = 1-(0.05/3), "Aspirin", "Placebo", "Yes", "No")
+
+Ergebnisse_Nichtraucher <- analyse_2x2(NichtRaucherTab, conf.level = 1-(0.05/3), "Aspirin", "Placebo", "Yes", "No")
+
+```
+
+
 
 
