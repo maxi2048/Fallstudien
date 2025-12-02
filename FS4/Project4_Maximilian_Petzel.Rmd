@@ -5,6 +5,9 @@ date: "2025-11-25"
 ---
 
 ```{r}
+library("readr")
+
+Fifa <- read_csv("Fifa.csv")
 
 
 Fifa$Height  <- round(as.numeric(sub("'.*", "", Fifa$Height)) * 30.48 + as.numeric(sub(".*'", "", Fifa$Height)) * 2.54)
@@ -27,27 +30,27 @@ Fifa$Weight  <- round(as.numeric(sub("lbs", "", Fifa$Weight)) * 0.45359237)
 ```
 
 ```{r}
-library(glmnet)
-
-imp_col_Feldspieler <- na.omit(imp_col_Feldspieler)
-
-X <- model.matrix(Overall ~ ., imp_col_Feldspieler)[ , -1]
-y <- imp_col_Feldspieler$Overall
-
-cv_lasso <- cv.glmnet(X, y, alpha = 1)
-lasso_coef <- coef(cv_lasso, s = "lambda.min")
-
-important_vars <- rownames(lasso_coef)[as.numeric(lasso_coef) != 0]
-important_vars <- important_vars[important_vars != "(Intercept)"]
-
-important_vars
-
-lasso_coef_less <- coef(cv_lasso, s = "lambda.1se")
-
-important_vars_less <- rownames(lasso_coef_less)[as.numeric(lasso_coef_less) != 0]
-important_vars_less <- important_vars_less[important_vars_less != "(Intercept)"]
-
-important_vars_less
+# library(glmnet)
+# 
+# imp_col_Feldspieler <- na.omit(imp_col_Feldspieler)
+# 
+# X <- model.matrix(Overall ~ ., imp_col_Feldspieler)[ , -1]
+# y <- imp_col_Feldspieler$Overall
+# 
+# cv_lasso <- cv.glmnet(X, y, alpha = 1)
+# lasso_coef <- coef(cv_lasso, s = "lambda.min")
+# 
+# important_vars <- rownames(lasso_coef)[as.numeric(lasso_coef) != 0]
+# important_vars <- important_vars[important_vars != "(Intercept)"]
+# 
+# important_vars
+# 
+# lasso_coef_less <- coef(cv_lasso, s = "lambda.1se")
+# 
+# important_vars_less <- rownames(lasso_coef_less)[as.numeric(lasso_coef_less) != 0]
+# important_vars_less <- important_vars_less[important_vars_less != "(Intercept)"]
+# 
+# important_vars_less
 
 ```
 
@@ -91,10 +94,8 @@ library(glmnet)
 run_lasso <- function(df, label) {
   df <- na.omit(df)
   
-  # nur numerische Variablen
   df_num <- df[ , sapply(df, is.numeric)]
   
-  # konstante Variablen raus
   konstante <- sapply(df_num, function(x) length(unique(x)) <= 1)
   df_num <- df_num[ , !konstante]
   
@@ -105,27 +106,21 @@ run_lasso <- function(df, label) {
   
   coefs <- coef(cvfit, s = "lambda.1se")
   
-  # In Dataframe umwandeln
   df_coefs <- data.frame(
     variable = rownames(coefs),
     coef = as.numeric(coefs)
   )
   
-  # Intercept raus
   df_coefs <- df_coefs[df_coefs$variable != "(Intercept)", ]
   
-  # Nur Nicht-Null-Koeffizienten
   df_nonzero <- df_coefs[df_coefs$coef != 0, ]
   
-  # Sortieren nach absoluter Größe
   df_nonzero <- df_nonzero[order(abs(df_nonzero$coef), decreasing = TRUE), ]
   
-  # Ausgabe
   cat("\n=====================\n")
   cat("Top 10 Variablen für:", label, "\n")
   cat("=====================\n")
-  print(df_nonzero[1:10, ])
-  
+
   return(df_nonzero)
 }
 
@@ -149,7 +144,7 @@ top10_def <- head(coef_def, 10)
 
 ggplot(top10_def,
        aes(x = reorder(variable, abs(coef)),
-           y = abs(coef))) +
+           y = abs(coef), fill = variable)) +
   geom_col() +
   coord_flip() +
   labs(
@@ -157,7 +152,7 @@ ggplot(top10_def,
     x = "Attribut",
     y = "|LASSO-Koeffizient|"
   ) +
-  theme_minimal()
+  theme_minimal() + theme(legend.position = "none")
 ```
 
 ```{r}
@@ -165,7 +160,7 @@ top10_mid <- head(coef_mid, 10)
 
 ggplot(top10_mid,
        aes(x = reorder(variable, abs(coef)),
-           y = abs(coef))) +
+           y = abs(coef), fill = variable)) +
   geom_col() +
   coord_flip() +
   labs(
@@ -173,7 +168,7 @@ ggplot(top10_mid,
     x = "Attribut",
     y = "|LASSO-Koeffizient|"
   ) +
-  theme_minimal()
+  theme_minimal() + theme(legend.position = "none")
 ```
 
 ```{r}
@@ -181,7 +176,7 @@ top10_att <- head(coef_att, 10)
 
 ggplot(top10_att,
        aes(x = reorder(variable, abs(coef)),
-           y = abs(coef))) +
+           y = abs(coef), fill = variable)) +
   geom_col() +
   coord_flip() +
   labs(
@@ -189,7 +184,7 @@ ggplot(top10_att,
     x = "Attribut",
     y = "|LASSO-Koeffizient|"
   ) +
-  theme_minimal()
+  theme_minimal() + theme(legend.position = "none")
 ```
 
 ```{r}
@@ -197,16 +192,71 @@ reg_def <- lm(Overall ~., data = Def[, c("Overall", top10_def$variable)])
 summary(reg_def)
 
 
+reg_def_df <- broom::tidy(reg_def, conf.int = TRUE)
+
+ggplot(reg_def_df[-1, ], aes(x = reorder(term, estimate),
+                         y = estimate)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  coord_flip() +
+  labs(
+    title = "Schätzer und 95%-Konfidenzintervalle",
+    subtitle = "(Top 10 Variablen – Mid)",
+    x = "Variable",
+    y = "Koeffizient"
+  ) +
+  theme_minimal()+ theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
 ```
 
 ```{r}
 reg_mid <- lm(Overall ~., data = Mid[, c("Overall", top10_mid$variable)])
 summary(reg_mid)
+
+reg_mid_df <- broom::tidy(reg_mid, conf.int = TRUE)
+
+ggplot(reg_mid_df[-1, ], aes(x = reorder(term, estimate),
+                         y = estimate)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  coord_flip() +
+  labs(
+    title = "Schätzer und 95%-Konfidenzintervalle",
+    subtitle = "(Top 10 Variablen – Mid)",
+    x = "Variable",
+    y = "Koeffizient"
+  ) +
+  theme_minimal()+ theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
 ```
 
 ```{r}
 reg_att <- lm(Overall ~., data = Att[, c("Overall", top10_att$variable)])
 summary(reg_att)
+
+reg_att_df <- broom::tidy(reg_att, conf.int = TRUE)
+
+ggplot(reg_att_df[-1, ], aes(x = reorder(term, estimate),
+                         y = estimate)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  coord_flip() +
+  labs(
+    title = "Schätzer und 95%-Konfidenzintervalle",
+    subtitle = "(Top 10 Variablen – Att)",
+    x = "Variable",
+    y = "Koeffizient"
+  ) +
+  theme_minimal()+ theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.3),
+    plot.background = element_rect(color = "black", fill = NA, linewidth = 0.3)
+  )
+
+
 ```
 
 ```{r}
@@ -293,9 +343,6 @@ Top10_mid
 ```{r}
 Top10_def
 ```
-
-
-
 
 ```{r}
 #Mean Decrease Accuracy wie stark sinkt die Accuracy, wenn man Variable permmutiert
