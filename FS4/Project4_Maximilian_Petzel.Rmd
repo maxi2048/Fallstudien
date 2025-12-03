@@ -201,7 +201,7 @@ ggplot(reg_def_df[-1, ], aes(x = reorder(term, estimate),
   coord_flip() +
   labs(
     title = "Schätzer und 95%-Konfidenzintervalle",
-    subtitle = "(Top 10 Variablen – Mid)",
+    subtitle = "(Top 10 Variablen – Def)",
     x = "Variable",
     y = "Koeffizient"
   ) +
